@@ -70,7 +70,7 @@ The project must not be described as production-grade until all of the following
 
 ## Review outcome
 
-The repository may be submitted as an **architecture and executable MVP baseline** for the Smart India Hackathon problem statement. It should not be submitted or represented as a deployed enterprise platform, completed security solution, legal ownership system, or BEL-endorsed implementation until the gates above are satisfied. The status of each gate should be updated through reviewed pull requests and linked evidence rather than by changing this conclusion alone. Requirement-level evidence is tracked in [`docs/PROBLEM-STATEMENT-TRACEABILITY.md`](PROBLEM-STATEMENT-TRACEABILITY.md).
+The repository may be submitted as an **architecture and executable MVP baseline** for the Smart India Hackathon problem statement. It should not be submitted or represented as a deployed enterprise platform, completed security solution, legal ownership system, or BEL-endorsed implementation until the gates above are satisfied. The status of each gate should be updated through reviewed pull requests and linked evidence rather than by changing this conclusion alone. Requirement-level evidence is tracked in [`docs/PROBLEM-STATEMENT-TRACEABILITY.md`](PROBLEM-STATEMENT-TRACEABILITY.md), and workflow/dependency scanning evidence is tracked in [`docs/SECURITY-SCANNING-STATUS.md`](SECURITY-SCANNING-STATUS.md).
 
 ## References
 

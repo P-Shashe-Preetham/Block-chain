@@ -30,10 +30,12 @@ The format is based on [Keep a Changelog][1], and the project follows [Semantic 
 
 - Replaced the generic audit event and failed-revert logging assumption with structured identity, key, asset, access-decision, role, transfer, and emergency events.
 - Corrected README, architecture, roadmap, security, and compliance claims for encrypted IPFS, CID semantics, ownership/access separation, controlled transaction costs, ECDSA selection, and prototype scope.
+- Pinned GitHub Actions, narrowed the Hardhat plugin surface, locked semantic-release dependencies, added CodeQL and Echidna workflows, and added a moderate-or-higher dependency audit gate.
 
 ### Security
 
 - The project remains prototype/MVP stage and has not been represented as independently audited or production-ready.
+- The current dependency audit has no moderate-or-higher findings; one low `elliptic` advisory remains in the Hardhat 2 transitive development-tool chain because the advertised patched version is not published. This is tracked in `docs/SECURITY-SCANNING-STATUS.md`.
 - No production contract addresses, credentials, or personal identity data are included in this documentation baseline.
 
 ## [0.1.0] - 2026-08-21

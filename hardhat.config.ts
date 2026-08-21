@@ -1,4 +1,6 @@
-import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-ethers";
+import "@nomicfoundation/hardhat-chai-matchers";
+import "@typechain/hardhat";
 import type { HardhatUserConfig } from "hardhat/config";
 
 const config: HardhatUserConfig = {

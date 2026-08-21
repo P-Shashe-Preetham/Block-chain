@@ -1,3 +1,33 @@
 allowBuilds:
   keccak: true
   secp256k1: true
+minimumReleaseAgeExclude:
+  - cookie@0.7.0
+  - tmp@0.2.4 || 0.2.6
+  - undici@6.23.0 || 6.24.0 || 6.27.0 || 6.28.0
+  - diff@8.0.3
+  - bn.js@4.12.3
+  - serialize-javascript@7.0.3 || 7.0.5
+  - lodash@4.17.23 || 4.17.24
+  - ws@8.20.1 || 8.21.0
+  - uuid@11.1.1
+  - adm-zip@0.6.0
+overrides:
+  adm-zip@<0.6.0: ^0.6.0
+  bn.js@<4.12.3: ^4.12.3
+  cookie@<0.7.0: ^0.7.0
+  diff@>=6.0.0 <8.0.3: ^8.0.3
+  lodash@<=4.17.23: ^4.17.24
+  lodash@>=4.0.0 <=4.17.22: ^4.17.23
+  lodash@>=4.0.0 <=4.17.23: ^4.17.24
+  serialize-javascript@<=7.0.2: ^7.0.3
+  serialize-javascript@>=5.0.0 <7.0.5: ^7.0.5
+  tmp@<0.2.6: ^0.2.6
+  tmp@<=0.2.3: ^0.2.4
+  undici@<6.23.0: ^6.23.0
+  undici@<6.24.0: ^6.24.0
+  undici@<6.27.0: ^6.27.0
+  undici@<6.28.0: ^6.28.0
+  uuid@<11.1.1: ^11.1.1
+  ws@>=8.0.0 <8.20.1: ^8.20.1
+  ws@>=8.0.0 <8.21.0: ^8.21.0
