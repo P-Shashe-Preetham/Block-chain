@@ -203,6 +203,10 @@ Local development uses a disposable blockchain network and test accounts. The pr
 
 The MVP decisions are: Solidity/Hardhat/OpenZeppelin, local EVM, ECDSA/secp256k1 wallet authentication, ERC-721 unique assets, fixed-size asset and metadata hashes, explicit manager-only transfers, disabled standard approvals, and a pause mechanism. Production decisions remain open for DID method/credential format, mobile-wallet protocol, permissioned network selection, multisig/KMS custody, confirmation/reorganization policy, encrypted IPFS pinning and key lifecycle, tenant isolation, legal meaning of asset ownership, API/indexer implementation, and whether the database layer uses Prisma behind a TypeScript indexer or a Python-native alternative such as SQLAlchemy/Alembic.
 
+## Curated reference inputs
+
+The 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger repositories are cataloged in [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md), mapped to adoption decisions in [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md), and bounded by [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). The current architecture adopts OpenZeppelin as a runtime dependency and treats the other repositories as patterns or reference-only inputs until separately approved.
+
 ## References
 
 [1]: https://www.w3.org/TR/did-core/ "W3C Decentralized Identifiers (DIDs) v1.0"

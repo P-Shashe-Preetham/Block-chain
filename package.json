@@ -12,6 +12,7 @@
   "scripts": {
     "build": "hardhat compile",
     "deploy:local": "hardhat run contracts/scripts/deploy.ts",
+    "validate:references": "python3 scripts/validate_references.py",
     "lint": "hardhat compile && tsc --noEmit",
     "test": "hardhat test",
     "test:coverage": "hardhat coverage"

@@ -196,6 +196,10 @@ The project is at the **prototype/MVP stage** with an executable Solidity contra
 
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md). Proposal alignment and production-gate status are tracked in [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md). Requirement-level evidence is mapped in [`docs/PROBLEM-STATEMENT-TRACEABILITY.md`](docs/PROBLEM-STATEMENT-TRACEABILITY.md).
 
+## Curated reference projects
+
+The repository preserves the 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger projects as curated references. Review [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md) for the complete catalog, [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md) for adoption decisions, and [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for attribution and license boundaries. Only OpenZeppelin Contracts is currently adopted as a runtime dependency; the other projects are not vendored, added as submodules, or represented as product components.
+
 ## License and citation
 
 This project is released under the [MIT License](LICENSE). If this reference architecture informs research, internal engineering, or a derivative implementation, see [`CITATION.cff`](CITATION.cff) for citation metadata.

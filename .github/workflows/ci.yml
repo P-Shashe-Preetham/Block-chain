@@ -89,6 +89,10 @@ jobs:
         if: ${{ hashFiles('requirements.txt') != '' }}
         run: python -m pip install --upgrade pip && pip install -r requirements.txt
 
+      - name: Validate curated repository references
+        if: ${{ hashFiles('package.json') != '' }}
+        run: pnpm validate:references
+
       - name: Lint JavaScript and TypeScript
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm lint

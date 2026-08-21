@@ -6,7 +6,7 @@ This report evaluates the repository against **Problem Statement 26125**, the at
 
 > **Conclusion:** The repository is compliant as a **traceable architecture and executable local MVP baseline** for the stated scope. It is **not production-ready** because the repository does not contain an API, an indexer, a web/mobile client, an IPFS pinning/storage service, production key custody, organizational network governance, or independent security assurance. The contract implementation is intentionally labeled a prototype and is not independently audited.
 
-The applied fixes include manager-only controlled transfers, disabled standard ERC-721 approvals, explicit non-reverting access decisions, duplicate-safe identity and asset registration, active-identity enforcement, replacement-key recovery, structured events, a pause mechanism, ECDSA/secp256k1 MVP selection, ERC-721 selection, encrypted-IPFS wording, and separation of NFT ownership from access permission.
+The applied fixes include manager-only controlled transfers, disabled standard ERC-721 approvals, explicit non-reverting access decisions, duplicate-safe identity and asset registration, active-identity enforcement, replacement-key recovery, structured events, a pause mechanism, ECDSA/secp256k1 MVP selection, ERC-721 selection, encrypted-IPFS wording, and separation of NFT ownership from access permission. Curated adoption and provenance boundaries for the 15 supplied repositories are recorded in [`docs/REFERENCED-REPOSITORIES.md`](REFERENCED-REPOSITORIES.md), [`docs/REFERENCE-INTEGRATION.md`](REFERENCE-INTEGRATION.md), and [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md).
 
 ## Compliance status legend
 
