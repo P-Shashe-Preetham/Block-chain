@@ -208,12 +208,43 @@ This project is released under the [MIT License](LICENSE). If this reference arc
 
 The following sources are used throughout the README and architecture documentation:
 
+### Standards and engineering guidance
+
 1. [W3C Decentralized Identifiers (DIDs) v1.0][1]
 2. [ERC-721: Non-Fungible Token Standard][2]
 3. [Deque axe accessibility engine][3]
 4. [OpenZeppelin Contracts documentation][4]
 5. [The Twelve-Factor App: Config][5]
 6. [GitHub Actions security hardening][6]
+7. [OWASP Application Security Verification Standard][7]
+8. [IPFS documentation][8]
+9. [NIST SP 800-57 key-management guidance][9]
+10. [NIST SP 800-38D authenticated encryption guidance][10]
+11. [Contributor Covenant Code of Conduct][11]
+12. [Keep a Changelog][12]
+13. [Conventional Commits][13]
+14. [GitHub repository licensing guidance][14]
+15. [Apache License 2.0][15]
+16. [BSD 3-Clause License][16]
+17. [GNU GPLv3 license][17]
+
+### Curated repositories
+
+18. [SpruceID SSI][18]
+19. [Sol DID][19]
+20. [OpenZeppelin Contracts repository][20]
+21. [NFT Minting DApp Starter][21]
+22. [Markkop NFT Marketplace][22]
+23. [Polygon NFT Marketplace][23]
+24. [NFT Auction Platform][24]
+25. [FIWARE Decentralized IAM][25]
+26. [NFT Credential Management System][26]
+27. [FileChain][27]
+28. [encryptoNFT][28]
+29. [Fileverse Self-Hosted Public Drive][29]
+30. [Hyperledger Sawtooth Asset Management][30]
+31. [Heka Identity Platform][31]
+32. [WeIdentity][32]
 
 [1]: https://www.w3.org/TR/did-core/ "W3C Decentralized Identifiers (DIDs) v1.0"
 [2]: https://eips.ethereum.org/EIPS/eip-721 "ERC-721: Non-Fungible Token Standard"
@@ -221,3 +252,29 @@ The following sources are used throughout the README and architecture documentat
 [4]: https://docs.openzeppelin.com/contracts/ "OpenZeppelin Contracts documentation"
 [5]: https://12factor.net/config "The Twelve-Factor App: Config"
 [6]: https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions "GitHub Actions security hardening"
+[7]: https://owasp.org/www-project-application-security-verification-standard/ "OWASP Application Security Verification Standard"
+[8]: https://ipfs.tech/ "IPFS documentation and project site"
+[9]: https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final "NIST SP 800-57 Part 1 key management"
+[10]: https://csrc.nist.gov/publications/detail/sp/800-38d/final "NIST SP 800-38D Galois/Counter Mode"
+[11]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/ "Contributor Covenant version 2.1"
+[12]: https://keepachangelog.com/en/1.1.0/ "Keep a Changelog"
+[13]: https://www.conventionalcommits.org/en/v1.0.0/ "Conventional Commits"
+[14]: https://docs.github.com/en/repositories/creating-and-managing-repositories/licensing-a-repository "GitHub licensing a repository guidance"
+[15]: https://www.apache.org/licenses/LICENSE-2.0 "Apache License 2.0"
+[16]: https://opensource.org/license/bsd-3-clause/ "BSD 3-Clause License"
+[17]: https://www.gnu.org/licenses/gpl-3.0.html "GNU General Public License v3.0"
+[18]: https://github.com/spruceid/ssi "SpruceID SSI repository"
+[19]: https://github.com/identity-com/sol-did "Sol DID repository"
+[20]: https://github.com/OpenZeppelin/openzeppelin-contracts "OpenZeppelin Contracts repository"
+[21]: https://github.com/tomhirst/nft-minting-dapp-starter "NFT Minting DApp Starter repository"
+[22]: https://github.com/Markkop/nft-marketplace "Markkop NFT Marketplace repository"
+[23]: https://github.com/obinnafranklinduru/NFT-MarketPlace "Polygon NFT Marketplace repository"
+[24]: https://github.com/furkanenesdagli/NFT_auction "NFT Auction Platform repository"
+[25]: https://github.com/FIWARE/decentralized-iam "FIWARE Decentralized IAM repository"
+[26]: https://github.com/Saurav-Navdhare/NFT-CredentialManagementSystem "NFT Credential Management System repository"
+[27]: https://github.com/akash70629/FileChain "FileChain repository"
+[28]: https://github.com/El-hacen21/encryptoNFT "encryptoNFT repository"
+[29]: https://github.com/fileverse/self-hosted-public-drive "Fileverse Self-Hosted Public Drive repository"
+[30]: https://github.com/hkhuang07/asset-management-sawtooth "Hyperledger Sawtooth Asset Management repository"
+[31]: https://github.com/hiero-ledger/heka-identity-platform "Heka Identity Platform repository"
+[32]: https://github.com/WeBankBlockchain/WeIdentity "WeIdentity repository"
