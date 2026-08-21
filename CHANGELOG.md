@@ -47,6 +47,8 @@ The format is based on [Keep a Changelog][1], and the project follows [Semantic 
 
 - Documented private vulnerability reporting, supported versions, and safe handling of keys and identity data.
 
+## References
+
 [Unreleased]: https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/releases/tag/v0.1.0
 [1]: https://keepachangelog.com/en/1.1.0/ "Keep a Changelog"

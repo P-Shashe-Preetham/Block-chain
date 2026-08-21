@@ -48,5 +48,7 @@ Maintainers will review and investigate reports, preserve relevant evidence, det
 
 This Code of Conduct is adapted from the [Contributor Covenant][1], version 2.1. Community members may consult the [enforcement guide][2] for additional context.
 
+## References
+
 [1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/ "Contributor Covenant version 2.1"
 [2]: https://www.contributor-covenant.org/recommendations/ "Contributor Covenant enforcement recommendations"
