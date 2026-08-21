@@ -60,4 +60,6 @@ The project follows coordinated disclosure where practical. A security advisory 
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for review expectations and [`ARCHITECTURE.md`](ARCHITECTURE.md) for trust boundaries. General GitHub repository security-hardening guidance is available from GitHub.[1]
 
+## References
+
 [1]: https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository "GitHub: Adding a security policy to your repository"
