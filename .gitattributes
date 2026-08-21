@@ -1,0 +1,27 @@
+# Normalize text files to LF on checkout and commit.
+* text=auto eol=lf
+
+# Treat documentation as text and Markdown as documentation.
+*.md text diff=markdown linguist-language=Markdown
+*.mdx text diff=markdown linguist-language=Markdown
+*.cff text linguist-language=YAML
+*.yml text linguist-language=YAML
+*.yaml text linguist-language=YAML
+*.json text linguist-language=JSON
+*.toml text linguist-language=TOML
+*.ini text linguist-language=INI
+*.env.example text linguist-language=Shell
+
+# Source languages.
+*.sol text linguist-language=Solidity
+*.py text linguist-language=Python
+*.ts text linguist-language=TypeScript
+*.tsx text linguist-language=TypeScript
+*.js text linguist-language=JavaScript
+*.jsx text linguist-language=JavaScript
+
+# Generated or vendored artifacts should not dominate repository statistics.
+artifacts/** linguist-generated=true
+cache/** linguist-generated=true
+coverage/** linguist-generated=true
+node_modules/** linguist-vendored=true

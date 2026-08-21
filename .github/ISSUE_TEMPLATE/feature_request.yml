@@ -1,0 +1,89 @@
+name: Feature request
+description: Propose a user, operator, security, or developer-experience improvement.
+title: "feat: "
+labels:
+  - enhancement
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem before the solution. Features that affect identity assurance, authorization, ownership, privacy, or deployment require explicit security and architecture review.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: Who has the problem, in what context, and what is difficult or unsafe today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired workflow and user-visible outcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Smart contracts
+        - Identity and verification
+        - Role-based access control
+        - NFT asset lifecycle
+        - API
+        - Indexer or reconciliation
+        - Web console
+        - Operations and deployment
+        - Security and privacy
+        - Documentation
+        - Developer tooling
+    validations:
+      required: true
+  - type: textarea
+    id: trust-impact
+    attributes:
+      label: Trust, privacy, and security impact
+      description: Explain whether the proposal changes roles, keys, identity data, on-chain state, metadata, auditability, or threat assumptions.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Explain other approaches and why they are insufficient.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List testable conditions for considering the proposal complete.
+      placeholder: |
+        - Given...
+        - When...
+        - Then...
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Intended stage
+      options:
+        - Prototype only
+        - Testnet
+        - Pilot
+        - Production readiness
+        - Undetermined
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues, discussions, and ADRs.
+          required: true
+        - label: I have not included secrets, private keys, seed phrases, or personal identity data.
+          required: true
+        - label: I understand that an approved feature still requires implementation review and security testing.
+          required: true

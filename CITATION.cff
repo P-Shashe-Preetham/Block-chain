@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If this project supports your research, engineering work, or derivative implementation, please cite it."
+title: "Blockchain Secure Platform: Decentralized Identity, Access Control, and Digital Asset Management"
+type: software
+abstract: >-
+  An MVP reference architecture for a blockchain-based platform that integrates
+  decentralized identity references, smart-contract-enforced role-based access
+  control, NFT-backed digital asset ownership, and an auditable event trail.
+authors:
+  - family-names: "Blockchain Secure Platform"
+    given-names: "Contributors"
+    affiliation: "Project contributors"
+    email: "maintainers@example.com"
+version: 0.1.0
+date-released: 2026-08-21
+license: MIT
+repository-code: "https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management"
+repository: "https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management"
+keywords:
+  - blockchain
+  - cybersecurity
+  - decentralized identity
+  - role-based access control
+  - NFT
+  - digital asset management
+  - smart contracts
+  - auditability
+
+preferred-citation:
+  type: software
+  title: "Blockchain Secure Platform: Decentralized Identity, Access Control, and Digital Asset Management"
+  authors:
+    - name: "Blockchain Secure Platform Contributors"
+  year: 2026
+  version: 0.1.0
+  license: MIT
+  url: "https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management"
