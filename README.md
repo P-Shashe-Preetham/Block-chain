@@ -1,7 +1,7 @@
 # Blockchain Secure Platform
 
 [![CI](https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/actions/workflows/ci.yml/badge.svg)](https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/badge)](https://securityscorecards.dev/viewer/?uri=https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/badge)](https://securityscorecards.dev/viewer/?uri=github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/commits-conventional-blue.svg)](https://www.conventionalcommits.org/)
 
@@ -61,7 +61,7 @@ Install the following before starting:
 
 ```bash
 git clone https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management.git
-cd blockchain-secure-platform
+cd Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management
 cp .env.example .env
 ```
 
@@ -179,7 +179,7 @@ Treat private keys as high-impact credentials. Use a hardware-backed or managed 
 
 The platform must not expose personal data through public events, token metadata, logs, error messages, or analytics. Hashing data does not automatically remove privacy risk when the underlying data can be recovered or linked. Define retention, erasure, revocation, subject-access, and legal-review procedures before storing identity-related data.
 
-The repository's `SECURITY.md`, `ARCHITECTURE.md`, and ADR describe the intended controls. They do not replace an organization-specific security assessment.
+The repository's `SECURITY.md`, `ARCHITECTURE.md`, ADRs, and [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md) describe the intended controls and current evidence boundaries. They do not replace an organization-specific security assessment.
 
 ## Project status
 
@@ -187,7 +187,7 @@ The project is at the **prototype/MVP documentation stage**. The repository cont
 
 ## Contributing and support
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md).
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md). Proposal alignment and production-gate status are tracked in [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md).
 
 ## License and citation
 

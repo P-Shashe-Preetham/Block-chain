@@ -28,7 +28,7 @@ flowchart TB
     Auth[Authentication and authorization policy]
     Indexer[Indexer and reconciliation worker]
     DB[(PostgreSQL read model)]
-    Store[(Encrypted object storage)]
+    Store[(Encrypted object storage or IPFS cluster)]
     Queue[(Redis / BullMQ optional)]
     RPC[EVM JSON-RPC endpoint]
     Contracts[Smart contracts\nIdentity reference / RBAC / NFT]
@@ -67,7 +67,7 @@ flowchart TB
 | Asset NFT contract/module | Mint, allocate, transfer, and query unique asset tokens according to policy | Legal ownership or off-chain custody facts that are not represented in contract policy |
 | Indexer | Consume events after the confirmation policy, build queryable projections, and reconcile drift | Permanent authority to rewrite history |
 | PostgreSQL | Store projections, workflow state, metadata references, and operational records | Canonical token ownership or unrestricted identity records |
-| Object storage | Store encrypted documents or metadata that are permitted off-chain | Unencrypted secrets or unapproved personal data |
+| Object storage / IPFS cluster | Store encrypted documents or metadata that are permitted off-chain; expose only approved content identifiers | Unencrypted secrets, public CIDs for confidential material, or unapproved personal data |
 | Queue | Retry indexing and non-critical jobs with idempotency | Authorization decisions for sensitive writes |
 | Deployment operator/KMS | Control deployment and privileged transaction signing under approved procedures | A single unmanaged long-lived private key |
 | Monitoring/audit | Detect failures, export approved evidence, and alert operators | Raw secrets, private keys, or sensitive payloads |
@@ -168,7 +168,7 @@ Log the operation identifier, service component, chain/network, contract, transa
 
 ## Deployment boundaries
 
-Local development uses a disposable blockchain network and test accounts. Testnet deployment requires approved contracts, reproducible scripts, verified artifacts, operator runbooks, and monitoring. Production deployment additionally requires organizational ownership, network and custody approval, independent security review, privacy and legal review, incident response, backup/recovery, and a rollback or emergency procedure that does not assume immutable state can be erased.
+Local development uses a disposable blockchain network and test accounts. The proposal's Hyperledger Fabric, private Polygon, and other permissioned-EVM options remain network-strategy candidates rather than selected deployments. Testnet deployment requires approved contracts, reproducible scripts, verified artifacts, operator runbooks, and monitoring. Production deployment additionally requires organizational ownership, network and custody approval, independent security review, privacy and legal review, incident response, backup/recovery, and a rollback or emergency procedure that does not assume immutable state can be erased.
 
 ## Repository structure
 
@@ -194,7 +194,7 @@ Local development uses a disposable blockchain network and test accounts. Testne
 
 ## Open architectural decisions
 
-The following must be resolved before production planning: selected DID method and credential format; public versus permissioned network; token standard and transfer policy; contract upgradeability; signer custody and multi-party approval; confirmation and reorganization policy; metadata storage and retention; tenant isolation; legal meaning of asset ownership; and whether the database layer uses Prisma behind a TypeScript indexer or a Python-native alternative such as SQLAlchemy/Alembic.
+The following must be resolved before production planning: selected DID method and credential format; web-only versus mobile-wallet client and supported signing protocol; public versus permissioned network, including the proposal's Hyperledger Fabric/private-Polygon alternatives; ERC-721 versus ERC-1155; contract upgradeability; signer custody and multi-party approval; confirmation and reorganization policy; IPFS cluster versus encrypted object storage; metadata storage and retention; tenant isolation; legal meaning of asset ownership; and whether the database layer uses Prisma behind a TypeScript indexer or a Python-native alternative such as SQLAlchemy/Alembic.
 
 ## References
 
@@ -203,3 +203,5 @@ The following must be resolved before production planning: selected DID method a
 [3]: https://docs.openzeppelin.com/contracts/ "OpenZeppelin Contracts documentation"
 [4]: https://12factor.net/config "The Twelve-Factor App: Config"
 [5]: https://owasp.org/www-project-application-security-verification-standard/ "OWASP Application Security Verification Standard"
+[6]: https://ipfs.tech/ "IPFS documentation and project site"
+[7]: https://eips.ethereum.org/EIPS/eip-1155 "ERC-1155 Multi Token Standard"
