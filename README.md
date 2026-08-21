@@ -206,6 +206,15 @@ This project is released under the [MIT License](LICENSE). If this reference arc
 
 ## References
 
+The following sources are used throughout the README and architecture documentation:
+
+1. [W3C Decentralized Identifiers (DIDs) v1.0][1]
+2. [ERC-721: Non-Fungible Token Standard][2]
+3. [Deque axe accessibility engine][3]
+4. [OpenZeppelin Contracts documentation][4]
+5. [The Twelve-Factor App: Config][5]
+6. [GitHub Actions security hardening][6]
+
 [1]: https://www.w3.org/TR/did-core/ "W3C Decentralized Identifiers (DIDs) v1.0"
 [2]: https://eips.ethereum.org/EIPS/eip-721 "ERC-721: Non-Fungible Token Standard"
 [3]: https://www.deque.com/axe/ "Deque axe accessibility engine"
