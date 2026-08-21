@@ -12,13 +12,13 @@ This document records the remediation applied to the repository's OpenSSF Scorec
 | Excess release token permissions | Moved write permissions from workflow scope to the release job; workflow scope is read-only | `.github/workflows/release.yml` |
 | Runtime release package resolution | Locked semantic-release and plugin versions in `package.json`/`pnpm-lock.yaml`; release uses `pnpm exec semantic-release` | `package.json`, `pnpm-lock.yaml`, `release.yml` |
 | Missing SAST workflow | Added CodeQL analysis for JavaScript/TypeScript on pushes, pull requests, schedule, and manual dispatch | `.github/workflows/codeql.yml` |
-| Missing fuzzing integration | Added a pinned Echidna workflow and invariant harness for administrator and approval controls | `.github/workflows/fuzz.yml`, `contracts/test/SecureAssetPlatformEchidna.sol` |
+| Missing fuzzing integration | Added a pinned Echidna workflow and invariant harness for administrator and approval controls, plus a fast-check TypeScript property suite recognized by Scorecard | `.github/workflows/fuzz.yml`, `contracts/test/SecureAssetPlatformEchidna.sol`, `contracts/test/IdentityReference.property.test.ts` |
 | Vulnerable transitive dependencies | Migrated from Hardhat 2 to Hardhat 3, removed the vulnerable ethers v5 dependency path, retained explicit narrow plugins, and kept a moderate-or-higher CI audit gate | `package.json`, `pnpm-lock.yaml`, `hardhat.config.ts`, `.github/workflows/ci.yml` |
 | Missing reference/security validation | Existing reference validator and CI checks remain active alongside the new security gates | `scripts/validate_references.py`, `.github/workflows/ci.yml` |
 
 ## Remaining external or upstream limits
 
-The dependency audit is now clean: `pnpm audit --audit-level=moderate` reports no known vulnerabilities, and the Hardhat 3 lockfile contains no `elliptic` package. The previous low advisory was removed by eliminating the Hardhat 2 ethers v5 dependency path rather than forcing an unpublished package version.
+The dependency audit is now clean: `pnpm audit --audit-level=moderate` reports no known vulnerabilities, and the Hardhat 3 lockfile contains no `elliptic` package. The previous low advisory was removed by eliminating the Hardhat 2 ethers v5 dependency path rather than forcing an unpublished package version. Fuzzing evidence now includes both the passing Echidna workflow and the passing TypeScript fast-check property suite.
 
 | Finding or Scorecard signal | Why it cannot be fixed only by a commit | Required action |
 |---|---|---|
