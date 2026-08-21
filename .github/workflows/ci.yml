@@ -76,7 +76,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ hashFiles('pyproject.toml') != '' || hashFiles('requirements.txt') != '' || hashFiles('services/api/requirements.txt') != '' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
