@@ -1,6 +1,7 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import type { SecureAssetPlatform } from "../../typechain-types";
+import { network } from "hardhat";
+
+const { ethers } = await network.create();
 
 const MANAGER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MANAGER_ROLE"));
 const AUDITOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("AUDITOR_ROLE"));
@@ -10,7 +11,7 @@ const DEFAULT_ADMIN_ROLE = ethers.ZeroHash;
 async function deployFixture() {
   const [admin, manager, auditor, user, recipient, outsider, replacement] = await ethers.getSigners();
   const factory = await ethers.getContractFactory("SecureAssetPlatform");
-  const platform = (await factory.deploy(admin.address)) as unknown as SecureAssetPlatform;
+  const platform = await factory.deploy(admin.address);
   await platform.waitForDeployment();
   await platform.registerIdentity(manager.address, ethers.keccak256(ethers.toUtf8Bytes("did:example:manager")));
   await platform.registerIdentity(auditor.address, ethers.keccak256(ethers.toUtf8Bytes("did:example:auditor")));
@@ -33,7 +34,7 @@ describe("SecureAssetPlatform", function () {
     const { platform, admin, user, replacement } = await deployFixture();
     await expect(
       platform.registerIdentity(user.address, ethers.keccak256(ethers.toUtf8Bytes("duplicate"))),
-    ).to.be.reverted;
+    ).to.revert(ethers);
 
     const replacementDid = ethers.keccak256(ethers.toUtf8Bytes("did:example:replacement"));
     await expect(platform.connect(admin).replaceIdentityKey(user.address, replacement.address, replacementDid))
@@ -50,13 +51,13 @@ describe("SecureAssetPlatform", function () {
 
     await expect(
       platform.connect(outsider).mintAndAllocateAsset(recipient.address, assetId, metadataHash),
-    ).to.be.reverted;
+    ).to.revert(ethers);
 
     await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash))
       .to.emit(platform, "AssetMintedAndAllocated")
       .withArgs(0, recipient.address, assetId, metadataHash);
     expect(await platform.ownerOf(0)).to.equal(recipient.address);
-    await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash)).to.be.reverted;
+    await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash)).to.revert(ethers);
   });
 
   it("records access decisions without reverting on denial", async function () {
@@ -97,20 +98,20 @@ describe("SecureAssetPlatform", function () {
     const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-003"));
     await platform.connect(manager).mintAndAllocateAsset(user.address, assetId, metadataHash);
 
-    await expect(platform.connect(user).transferAsset(user.address, recipient.address, 0)).to.be.reverted;
-    await expect(platform.connect(user).transferFrom(user.address, auditor.address, 0)).to.be.reverted;
-    await expect(platform.connect(manager).transferAsset(user.address, auditor.address, 0)).not.to.be.reverted;
+    await expect(platform.connect(user).transferAsset(user.address, recipient.address, 0)).to.revert(ethers);
+    await expect(platform.connect(user).transferFrom(user.address, auditor.address, 0)).to.revert(ethers);
+    await expect(platform.connect(manager).transferAsset(user.address, auditor.address, 0)).not.to.revert(ethers);
     expect(await platform.ownerOf(0)).to.equal(auditor.address);
-    await expect(platform.connect(manager)["safeTransferFrom(address,address,uint256)"](auditor.address, user.address, 0)).not.to.be.reverted;
+    await expect(platform.connect(manager)["safeTransferFrom(address,address,uint256)"](auditor.address, user.address, 0)).not.to.revert(ethers);
     expect(await platform.ownerOf(0)).to.equal(user.address);
   });
 
   it("prevents uncontrolled expansion of the default administrator role and approvals", async function () {
     const { platform, admin, outsider } = await deployFixture();
-    await expect(platform.connect(admin).grantRole(DEFAULT_ADMIN_ROLE, outsider.address)).to.be.reverted;
-    await expect(platform.connect(admin).revokeRole(DEFAULT_ADMIN_ROLE, admin.address)).to.be.reverted;
-    await expect(platform.connect(admin).renounceRole(DEFAULT_ADMIN_ROLE, admin.address)).to.be.reverted;
-    await expect(platform.connect(admin).approve(outsider.address, 0)).to.be.reverted;
+    await expect(platform.connect(admin).grantRole(DEFAULT_ADMIN_ROLE, outsider.address)).to.revert(ethers);
+    await expect(platform.connect(admin).revokeRole(DEFAULT_ADMIN_ROLE, admin.address)).to.revert(ethers);
+    await expect(platform.connect(admin).renounceRole(DEFAULT_ADMIN_ROLE, admin.address)).to.revert(ethers);
+    await expect(platform.connect(admin).approve(outsider.address, 0)).to.revert(ethers);
   });
 
   it("blocks state changes while paused", async function () {
@@ -118,6 +119,6 @@ describe("SecureAssetPlatform", function () {
     await platform.connect(admin).pause();
     const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-004"));
     const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-004"));
-    await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash)).to.be.reverted;
+    await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash)).to.revert(ethers);
   });
 });

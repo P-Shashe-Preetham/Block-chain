@@ -48,10 +48,12 @@ jobs:
       - name: Run Echidna
         uses: crytic/echidna-action@f7e374e42bf7131f7307a92f5549ed6b2fd17c9d # v2.0.2
         with:
-          files: .
+          files: contracts/test/SecureAssetPlatformEchidna.sol
           contract: SecureAssetPlatformEchidna
           test-mode: property
           test-limit: 1000
           seq-len: 20
-          crytic-args: --hardhat-ignore-compile
+          crytic-args: --compile-force-framework solc
+          solc-version: 0.8.24
+          solc-args: --base-path . --include-path node_modules
           output-file: echidna-results.txt

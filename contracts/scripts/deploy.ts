@@ -1,6 +1,7 @@
-import { ethers } from "hardhat";
+import { network } from "hardhat";
 
 async function main() {
+  const { ethers } = await network.create();
   const [deployer] = await ethers.getSigners();
   const factory = await ethers.getContractFactory("SecureAssetPlatform");
   const platform = await factory.deploy(deployer.address);
