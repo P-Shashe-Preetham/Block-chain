@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog][1], and the project follows [Semantic 
 - Initial repository documentation suite for decentralized identity references, role-based access control, NFT-backed digital-asset ownership, smart-contract governance, and immutable event auditing.
 - Initial architecture, governance, security, contribution, support, and roadmap documents.
 - Initial CI, supply-chain, environment, and AI-agent documentation plans are maintained alongside the project as implementation lands.
+- Executable `SecureAssetPlatform` MVP with ECDSA/secp256k1-compatible EVM identity references, RBAC, unique asset IDs, ERC-721 ownership, manager-controlled transfers, explicit access decisions, replacement-key recovery, and pause controls.
+- Problem Statement 26125 traceability matrix, threat model, acceptance criteria, and MVP asset/network ADR.
 
 ### Changed
 
@@ -26,7 +28,8 @@ The format is based on [Keep a Changelog][1], and the project follows [Semantic 
 
 ### Fixed
 
-- None.
+- Replaced the generic audit event and failed-revert logging assumption with structured identity, key, asset, access-decision, role, transfer, and emergency events.
+- Corrected README, architecture, roadmap, security, and compliance claims for encrypted IPFS, CID semantics, ownership/access separation, controlled transaction costs, ECDSA selection, and prototype scope.
 
 ### Security
 

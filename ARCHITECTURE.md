@@ -76,7 +76,7 @@ flowchart TB
 
 ### Identity reference
 
-The contract stores a stable subject reference, DID identifier or approved hash, verification status or version, and lifecycle events. It should not store raw identity documents, credentials, biometric data, private contact details, or secrets. The identity model must define how a reference is created, linked, rotated, suspended, revoked, and recovered.
+The contract stores a stable subject reference and DID hash, using wallet-based ECDSA/secp256k1 authentication for the EVM MVP. It should not store raw identity documents, credentials, biometric data, private contact details, or secrets. This is a blockchain-backed DID registry/reference, not a complete W3C SSI ecosystem. Verification methods, DID-document resolution, rotation, suspension, revocation, and recovery remain explicit lifecycle decisions.
 
 ### Roles and permissions
 
@@ -84,7 +84,7 @@ The default roles are `ADMIN`, `MANAGER`, `AUDITOR`, and `USER`. The contract sh
 
 ### Asset tokens
 
-Each asset token has a unique token identifier, an approved metadata URI or content hash, an identity reference or owner address according to the selected identity model, and lifecycle events. Minting and allocation should be separate conceptual operations even if implemented atomically. The policy must distinguish creation authority, allocation authority, transfer authority, and emergency recovery authority.
+Each asset token has a unique token identifier, a unique organizational asset ID such as `BEL-LAB-001`, a metadata hash, an identity reference or owner address, and lifecycle events. The MVP rejects duplicate asset IDs and uses ERC-721 for unique assets; ERC-1155 remains a future option for batches or semi-fungible licenses. Physical ownership is not inferred from token ownership alone: a QR/NFC tag and organizational registration are required for physical-asset verification. The policy separates creation, allocation, access, transfer, and emergency-recovery authority.
 
 ### Events
 
@@ -92,7 +92,7 @@ Events should be stable, documented, and sufficient for rebuilding projections. 
 
 ## Trust boundaries and authorization
 
-The API and frontend are untrusted relative to the contract. Client-provided role names, token owners, and permission flags must be treated as claims to validate, not facts to accept. The API should verify the caller, the intended chain and contract, nonce or replay protections, and the expected state transition before submitting or reporting success.
+The API and frontend are untrusted relative to the contract. Client-provided role names, token owners, and permission flags must be treated as claims to validate, not facts to accept. The current MVP contract additionally overrides the inherited ERC-721 transfer entry points and checks active identity status so that `safeTransferFrom`, `transferFrom`, and the manager-authorized policy path do not silently bypass lifecycle rules. The API should verify the caller, the intended chain and contract, nonce or replay protections, and the expected state transition before submitting or reporting success.
 
 For a privileged operation, the minimum flow is:
 
@@ -114,7 +114,11 @@ For a privileged operation, the minimum flow is:
 | Sensitive identity data | Documents, biometric data, personal contact data, credentials | Approved encrypted system outside the chain | Data minimization, consent/legal basis, strict retention, deletion process |
 | Secret material | Private keys, seed phrases, tokens, KMS credentials | Hardware-backed or managed secret store | Never commit, log, export, or place in client code |
 
-Hashing sensitive data is not automatically privacy-preserving if the source can be recovered or linked. The project should document data retention, erasure, revocation, subject rights, legal review, and chain immutability tradeoffs before using real identity data.
+Hashing sensitive data is not automatically privacy-preserving if the source can be recovered or linked. For the prototype, encrypt each permitted asset payload with an AES-256 data-encryption key before storing it in IPFS or approved object storage; anchor the resulting CID or approved content reference on-chain. A CID is a content identifier containing content-addressing information and a multihash, not simply a SHA-256 file hash. Protect the data-encryption key through controlled wrapping/access logic; production may integrate an enterprise KMS/HSM. Blockchain authorization cannot prevent copying after decryption, so production environments may require endpoint controls or DLP. The project must document retention, erasure, revocation, subject rights, legal review, and chain immutability tradeoffs before using real identity data.
+
+## Ownership and access are separate
+
+NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset policy, and approval state. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs.
 
 ## Asset lifecycle
 
@@ -174,10 +178,10 @@ Local development uses a disposable blockchain network and test accounts. The pr
 
 ```text
 .
-├── apps/web/                         # Next.js frontend
+├── apps/web/                         # Next.js frontend, not yet implemented
 ├── contracts/                        # Solidity contracts and deployment scripts
-│   ├── contracts/                    # Domain contracts and libraries
-│   ├── test/                         # Unit, property, and negative tests
+│   ├── SecureAssetPlatform.sol       # Executable MVP identity/RBAC/NFT baseline
+│   ├── test/                         # Contract behavior and negative tests
 │   └── scripts/                      # Local/testnet operations
 ├── services/api/                     # FastAPI service
 │   ├── app/                          # Routes, services, policies, models
@@ -186,7 +190,10 @@ Local development uses a disposable blockchain network and test accounts. The pr
 ├── packages/types/                   # Shared schemas and generated types
 ├── packages/ui/                      # Accessible shared UI components
 ├── docs/ADR/                         # Architecture Decision Records
-├── docs/threat-model/                # Abuse cases and security analysis
+├── docs/COMPLIANCE-REPORT.md         # Problem-statement and production-gate status
+├── docs/PROBLEM-STATEMENT-TRACEABILITY.md
+├── docs/THREAT-MODEL.md              # Abuse cases, invariants, and controls
+├── docs/ACCEPTANCE-CRITERIA.md       # Demonstrable MVP outcomes
 ├── docs/runbooks/                    # Deployment, incident, backup, and recovery
 ├── .github/                          # Workflows, issue forms, ownership, automation
 └── .devcontainer/                    # Reproducible developer environment
@@ -194,7 +201,7 @@ Local development uses a disposable blockchain network and test accounts. The pr
 
 ## Open architectural decisions
 
-The following must be resolved before production planning: selected DID method and credential format; web-only versus mobile-wallet client and supported signing protocol; public versus permissioned network, including the proposal's Hyperledger Fabric/private-Polygon alternatives; ERC-721 versus ERC-1155; contract upgradeability; signer custody and multi-party approval; confirmation and reorganization policy; IPFS cluster versus encrypted object storage; metadata storage and retention; tenant isolation; legal meaning of asset ownership; and whether the database layer uses Prisma behind a TypeScript indexer or a Python-native alternative such as SQLAlchemy/Alembic.
+The MVP decisions are: Solidity/Hardhat/OpenZeppelin, local EVM, ECDSA/secp256k1 wallet authentication, ERC-721 unique assets, fixed-size asset and metadata hashes, explicit manager-only transfers, disabled standard approvals, and a pause mechanism. Production decisions remain open for DID method/credential format, mobile-wallet protocol, permissioned network selection, multisig/KMS custody, confirmation/reorganization policy, encrypted IPFS pinning and key lifecycle, tenant isolation, legal meaning of asset ownership, API/indexer implementation, and whether the database layer uses Prisma behind a TypeScript indexer or a Python-native alternative such as SQLAlchemy/Alembic.
 
 ## References
 

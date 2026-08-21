@@ -1,23 +1,23 @@
-# Replace @tejaswin-amara/* placeholders with approved GitHub teams or maintainers before launch.
+# Current repository owner routing; add approved organization teams before production launch.
 # The most specific matching rule takes precedence.
 
 * @tejaswin-amara
 
-/contracts/ @tejaswin-amara @tejaswin-amara
-*.sol @tejaswin-amara @tejaswin-amara
-/contracts/scripts/ @tejaswin-amara @tejaswin-amara
+/contracts/ @tejaswin-amara
+*.sol @tejaswin-amara
+/contracts/scripts/ @tejaswin-amara
 
-/services/api/ @tejaswin-amara @tejaswin-amara
-/services/indexer/ @tejaswin-amara @tejaswin-amara
+/services/api/ @tejaswin-amara
+/services/indexer/ @tejaswin-amara
 /apps/web/ @tejaswin-amara
 /packages/ @tejaswin-amara
 
 docs/ @tejaswin-amara
 /docs/ADR/ @tejaswin-amara
-/docs/threat-model/ @tejaswin-amara
-/docs/runbooks/ @tejaswin-amara @tejaswin-amara
+/docs/THREAT-MODEL.md @tejaswin-amara
+/docs/runbooks/ @tejaswin-amara
 
-.github/workflows/ @tejaswin-amara @tejaswin-amara
+.github/workflows/ @tejaswin-amara
 .github/dependabot.yml @tejaswin-amara
 .github/CODEOWNERS @tejaswin-amara
-.env.example @tejaswin-amara @tejaswin-amara
+.env.example @tejaswin-amara

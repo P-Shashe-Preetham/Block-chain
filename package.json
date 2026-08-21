@@ -1,0 +1,31 @@
+{
+  "name": "blockchain-secure-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "description": "MVP smart-contract baseline for decentralized identity, RBAC, and NFT-backed digital assets",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22 <23",
+    "pnpm": "11.21.0"
+  },
+  "scripts": {
+    "build": "hardhat compile",
+    "deploy:local": "hardhat run contracts/scripts/deploy.ts",
+    "lint": "hardhat compile && tsc --noEmit",
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.12.12",
+    "ethers": "^6.13.1",
+    "hardhat": "^2.22.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.0.2"
+  }
+}

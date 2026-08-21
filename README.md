@@ -15,7 +15,7 @@ The project is tailored to the **Blockchain & Cybersecurity** domain and is inte
 
 The platform connects four trust functions into one auditable workflow. A decentralized identifier (DID) represents an identity independently of a single application database. Smart contracts enforce administrator-controlled role assignment and permission checks. Digital assets are represented by unique non-fungible tokens (NFTs) whose ownership history can be independently verified. Contract events provide a tamper-evident history for identity, asset, allocation, transfer, and permission operations. DID terminology follows the W3C Decentralized Identifiers model, while NFT behavior is documented against the ERC-721 interface conventions.[1] [2]
 
-The MVP deliberately separates **on-chain truth** from **off-chain application services**. A contract should not store raw identity documents, credentials, biometric data, secrets, or regulated personal information. Instead, the application stores encrypted metadata and records only the minimum cryptographic references needed to verify integrity and authorization.
+The MVP deliberately separates **on-chain truth** from **off-chain application services**. A contract should not store raw identity documents, credentials, biometric data, secrets, or regulated personal information. Instead, permitted asset payloads are encrypted with an AES-256 data-encryption key before IPFS or approved object storage; the key is protected separately through controlled wrapping/access logic, with enterprise KMS/HSM integration reserved for production. The chain records only the minimum cryptographic references needed to verify integrity and authorization.
 
 ## Architecture at a glance
 
@@ -52,7 +52,7 @@ Install the following before starting:
 |---|---:|---|
 | Git | 2.40+ | Source control |
 | Node.js | 22 LTS | Hardhat contracts and Next.js frontend |
-| pnpm | 9+ | JavaScript workspace management |
+| pnpm | 11.21.0 | JavaScript workspace management |
 | Python | 3.11+ | FastAPI service and tooling |
 | Docker | 24+ | PostgreSQL, Redis, and MinIO local dependencies |
 | Foundry or a compatible wallet | Current stable | Optional contract interaction and testnet workflows |
@@ -88,8 +88,8 @@ pip install -r services/api/requirements.txt
 ### Run contract tests
 
 ```bash
-pnpm --filter contracts test
-pnpm --filter contracts compile
+pnpm test
+pnpm build
 ```
 
 Contract tests should cover unauthorized minting, unauthorized role changes, duplicate allocation, ownership transfer, event emission, paused or emergency states, and any upgradeability policy. Do not deploy an unreviewed contract to a public network.
@@ -126,11 +126,15 @@ An administrator assigns a predefined role such as `ADMIN`, `MANAGER`, `AUDITOR`
 
 ### Asset minting and allocation
 
-An authorized administrator mints a unique NFT with a controlled metadata reference, associates the token with an identity reference, and emits an allocation event. The platform must prevent unauthorized minting, duplicate allocation, and silent reassignment. Ownership transfer is valid only when the contract's policy and the organization's governance process permit it.
+An authorized manager mints a unique ERC-721 asset with a unique organizational asset ID and a fixed-size metadata hash, associates the token with an active identity, and emits a structured allocation event. Duplicate asset IDs are rejected. Owners can request access, but sensitive enterprise transfers require the manager-controlled transfer path; standard ERC-721 approvals are disabled in the MVP.
+
+### Controlled access request
+
+An active identity submits `requestAccess(tokenId, action)`. The contract evaluates the owner, manager, and auditor policy and emits `AccessDecision` with a `GRANTED` or `DENIED` result without reverting on denial. This preserves a committed decision event while keeping asset ownership separate from read or use permission.
 
 ### Verification and audit
 
-A verifier reads contract state and events, confirms the asset identifier and ownership history, and compares the metadata hash with the approved off-chain object. The application may provide a convenient read model, but independent verification should remain possible using the chain, contract addresses, ABI, and published deployment metadata.
+A verifier reads contract state and events, confirms the token and organizational asset ID, checks ownership history, and compares the metadata hash with the approved encrypted off-chain object. If IPFS is used, the encrypted payload is referenced by its CID; a CID is not simply a SHA-256 file hash. Owners, managers, and auditors receive separate access decisions, and blockchain authorization cannot prevent copying after an authorized decryption.
 
 ## Default technology stack versus alternatives
 
@@ -165,9 +169,12 @@ A verifier reads contract state and events, confirms the asset identifier and ow
 │   ├── types/                # Shared domain types and schemas
 │   └── ui/                   # Reusable accessible UI components
 ├── docs/
-│   ├── ADR/                  # Architecture Decision Records
-│   ├── threat-model/         # Threat model and abuse cases
-│   └── runbooks/             # Operational procedures
+│   ├── ADR/                      # Architecture Decision Records
+│   ├── COMPLIANCE-REPORT.md      # Requirement and production-gate assessment
+│   ├── PROBLEM-STATEMENT-TRACEABILITY.md
+│   ├── THREAT-MODEL.md           # Threats, invariants, and abuse cases
+│   ├── ACCEPTANCE-CRITERIA.md    # MVP demonstration criteria
+│   └── runbooks/                 # Operational procedures
 ├── .github/                  # Issues, workflows, ownership, and automation
 ├── .devcontainer/            # Reproducible development environment
 └── docker-compose.yml        # Local infrastructure, when implementation lands
@@ -179,15 +186,15 @@ Treat private keys as high-impact credentials. Use a hardware-backed or managed 
 
 The platform must not expose personal data through public events, token metadata, logs, error messages, or analytics. Hashing data does not automatically remove privacy risk when the underlying data can be recovered or linked. Define retention, erasure, revocation, subject-access, and legal-review procedures before storing identity-related data.
 
-The repository's `SECURITY.md`, `ARCHITECTURE.md`, ADRs, and [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md) describe the intended controls and current evidence boundaries. They do not replace an organization-specific security assessment.
+The repository's `SECURITY.md`, `ARCHITECTURE.md`, ADRs, [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md), [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md), and [`docs/ENCRYPTION-KEY-MANAGEMENT.md`](docs/ENCRYPTION-KEY-MANAGEMENT.md) describe the intended controls and current evidence boundaries. They do not replace an organization-specific security assessment.
 
 ## Project status
 
-The project is at the **prototype/MVP documentation stage**. The repository contains architecture and governance defaults, not evidence of a deployed or audited system. Roadmap progress, supported networks, contract addresses, and release artifacts should be updated as implementation work is accepted.
+The project is at the **prototype/MVP stage** with an executable Solidity contract baseline, focused tests, and architecture/governance documentation. The API, indexer, web/mobile clients, IPFS cluster, production key custody, and independent audit are not yet implemented or evidenced. Roadmap progress, supported networks, contract addresses, and release artifacts should be updated as implementation work is accepted.
 
 ## Contributing and support
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md). Proposal alignment and production-gate status are tracked in [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md).
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md). Proposal alignment and production-gate status are tracked in [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md). Requirement-level evidence is mapped in [`docs/PROBLEM-STATEMENT-TRACEABILITY.md`](docs/PROBLEM-STATEMENT-TRACEABILITY.md).
 
 ## License and citation
 

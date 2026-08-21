@@ -1,17 +1,17 @@
 # Roadmap
 
-This roadmap describes a staged path from documentation baseline to a controlled prototype and, only after evidence and approvals, toward a production-ready deployment. Dates are intentionally expressed as horizons rather than commitments until maintainers, resources, target network, and compliance requirements are confirmed.
+This roadmap describes a staged path from an executable contract MVP and traceable architecture baseline to a controlled prototype and, only after evidence and approvals, toward a production-ready deployment. Dates are intentionally expressed as horizons rather than commitments until maintainers, resources, target network, and compliance requirements are confirmed.
 
 ## Current status
 
-The project is at the **prototype/MVP documentation stage**. The repository defines default boundaries and governance but does not claim deployed contracts, a completed security audit, verified institutional ownership, or production authorization.
+The project is at the **prototype/MVP stage**. The repository contains an executable local Solidity contract baseline, focused negative tests, traceability, threat-model, acceptance-criteria, and governance documentation. It does not claim a deployed network, completed security audit, verified institutional ownership, or production authorization.
 
 ## Milestones
 
 | Horizon | Milestone | Outcome | Exit evidence |
 |---|---|---|---|
 | Sprint 0 | Repository foundation | Tooling, ownership, policies, environment, and CI baseline | Clean checkout, documented commands, passing static checks |
-| Sprints 1–2 | Contract domain model | DID references, roles, permissions, NFT lifecycle, events, and emergency controls | Unit tests for authorized and rejected state transitions; reviewed ABI and event schema |
+| Sprints 1–2 | Contract domain model | **Baseline complete:** DID hashes, roles, permissions, NFT lifecycle, events, pause controls, transfer enforcement, and negative tests | Passing Hardhat compile/tests; next exit gate is fuzz/invariant coverage, ABI publication, and independent review |
 | Sprints 2–3 | API and indexer baseline | Read models, event ingestion, reconciliation, and safe API authorization | Idempotent indexing tests, API contract tests, and documented failure handling |
 | Sprints 3–4 | Web console | Identity, role, asset, allocation, verification, and audit views | End-to-end tests, keyboard review, accessibility baseline, and permission-aware UI |
 | Sprints 4–5 | Security and privacy hardening | Threat model, data classification, key-management design, and abuse-case mitigations | Security review sign-off, privacy review inputs, and remediation tracker |
@@ -27,7 +27,7 @@ Select the DID method or enterprise identity integration, define verification as
 
 ### Smart contracts
 
-Implement the smallest auditable contract surface. Prefer explicit roles, constrained minting, safe transfer rules, event completeness, pause or emergency procedures, and carefully documented upgradeability. Add property-based or fuzz testing when the contract model stabilizes. Obtain independent review before any deployment that holds value or controls organizational access.
+The local MVP baseline implements the smallest auditable contract surface in `contracts/SecureAssetPlatform.sol`. The next step is to add fuzz/invariant tests, publish the ABI, and obtain independent review. The design uses explicit roles, constrained minting, safe transfer rules, event completeness, pause or emergency procedures, and a documented upgradeability policy. Any deployment that holds value or controls organizational access requires independent review first.
 
 ### Asset governance
 

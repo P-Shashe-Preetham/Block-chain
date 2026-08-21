@@ -56,6 +56,12 @@ Smart-contract changes should include tests for unauthorized callers, duplicate 
 
 The project follows coordinated disclosure where practical. A security advisory should state affected versions, impact, remediation, and whether deployed systems require an operator action. Do not publish an exploit or sensitive details until maintainers and affected operators have had a reasonable opportunity to mitigate.
 
+## MVP contract controls and limitations
+
+The MVP contract enforces identity activity at the ownership-change boundary, disables standard ERC-721 approval paths, and requires the manager role for transfers. NFT ownership is separate from access permission: `requestAccess` records a committed `AccessDecision` with `GRANTED` or `DENIED` rather than attempting to log a reverted transaction. Duplicate organizational asset IDs are rejected, identity registration cannot silently overwrite an existing record, and `replaceIdentityKey` suspends the old identity after an approved recovery decision.
+
+The architecture requires encryption of sensitive payloads before IPFS or object-storage use. IPFS and a CID do not provide confidentiality, deletion, or key recovery automatically. The current repository does not claim an implemented enterprise KMS/HSM, multisignature custody, IPFS pinning service, API/indexer, client DLP, or independent smart-contract audit. Once an authorized user decrypts data, blockchain authorization cannot guarantee that the user will not copy or redistribute it.
+
 ## Related guidance
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for review expectations and [`ARCHITECTURE.md`](ARCHITECTURE.md) for trust boundaries. General GitHub repository security-hardening guidance is available from GitHub.[1]
