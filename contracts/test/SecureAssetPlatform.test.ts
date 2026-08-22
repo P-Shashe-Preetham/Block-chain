@@ -120,6 +120,39 @@ describe("SecureAssetPlatform", function () {
       .withArgs(auditor.address, 0, action, true);
   });
 
+  it("expires access rules and rejects stale expiry configuration", async function () {
+    const { platform, manager, user, recipient } = await deployFixture();
+    const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-EXPIRY-001"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-expiry-001"));
+    const action = ethers.keccak256(ethers.toUtf8Bytes("READ_ASSET"));
+    await platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash);
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const expiresAt = BigInt(latestBlock!.timestamp + 10);
+
+    await platform.connect(manager).setAccessRule(0, user.address, action, true, expiresAt);
+    await expect(platform.connect(user).requestAccess(0, action))
+      .to.emit(platform, "AccessDecision")
+      .withArgs(user.address, 0, action, true);
+    await expect(platform.connect(manager).setAccessRule(0, user.address, action, true, BigInt(latestBlock!.timestamp - 1)))
+      .to.revert(ethers);
+
+    await ethers.provider.send("evm_increaseTime", [11]);
+    await ethers.provider.send("evm_mine", []);
+    await expect(platform.connect(user).requestAccess(0, action))
+      .to.emit(platform, "AccessDecision")
+      .withArgs(user.address, 0, action, false);
+  });
+
+  it("requires an active manager for lifecycle transitions", async function () {
+    const { platform, manager, user, recipient } = await deployFixture();
+    const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-LIFECYCLE-001"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-lifecycle-001"));
+    await platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash);
+    await expect(platform.connect(user).setAssetStatus(0, 1)).to.revert(ethers);
+    await platform.connect(manager).setAssetStatus(0, 3);
+    await expect(platform.connect(manager).setAssetStatus(0, 2)).to.revert(ethers);
+  });
+
   it("offboards an identity, revokes roles, and emits an offboarding event", async function () {
     const { platform, admin, manager } = await deployFixture();
     const reason = ethers.keccak256(ethers.toUtf8Bytes("EMPLOYEE_EXIT"));
