@@ -101,3 +101,24 @@ class InMemoryProjection:
         expected = list(range(numbers[0], numbers[-1] + 1))
         if numbers != expected:
             raise BlockGap(f"projection has a block gap between {numbers[0]} and {numbers[-1]}")
+
+    def finalized_events(self, head_block: int, *, confirmations: int) -> tuple[CanonicalEvent, ...]:
+        """Return only events with the explicitly requested canonical depth."""
+        self._validate_confirmation_query(head_block, confirmations)
+        return tuple(
+            event for event in self.events
+            if head_block - event.block_number >= confirmations
+        )
+
+    def unfinalized_events(self, head_block: int, *, confirmations: int) -> tuple[CanonicalEvent, ...]:
+        """Return events that remain below the configured confirmation depth."""
+        self._validate_confirmation_query(head_block, confirmations)
+        return tuple(
+            event for event in self.events
+            if head_block - event.block_number < confirmations
+        )
+
+    @staticmethod
+    def _validate_confirmation_query(head_block: int, confirmations: int) -> None:
+        if head_block < 0 or confirmations < 0:
+            raise ValueError("head block and confirmation depth must be non-negative")

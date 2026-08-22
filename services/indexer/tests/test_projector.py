@@ -38,6 +38,18 @@ class ProjectionTests(unittest.TestCase):
         with self.assertRaises(BlockGap):
             projection.verify_contiguous_blocks()
 
+    def test_confirmation_depth_separates_finalized_and_unfinalized_events(self) -> None:
+        projection = InMemoryProjection()
+        projection.checkpoint(1, "0xblock-1")
+        projection.ingest(event(1))
+        projection.checkpoint(2, "0xblock-2")
+        projection.checkpoint(3, "0xblock-3")
+        self.assertEqual(projection.finalized_events(3, confirmations=2), (event(1),))
+        self.assertEqual(projection.unfinalized_events(3, confirmations=2), ())
+        self.assertEqual(projection.unfinalized_events(2, confirmations=2), (event(1),))
+        with self.assertRaises(ValueError):
+            projection.finalized_events(3, confirmations=-1)
+
     def test_same_block_with_different_hash_is_rejected(self) -> None:
         projection = InMemoryProjection()
         projection.checkpoint(4, "0xblock-4")
