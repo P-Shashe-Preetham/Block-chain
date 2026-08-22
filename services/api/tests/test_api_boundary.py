@@ -10,6 +10,7 @@ import httpx
 from services.api.app import create_app
 from services.api.auth import extract_bearer_token
 from services.api.config import ConfigurationError, Settings
+from services.api.rpc import verify_rpc_contract
 
 
 app = create_app(
@@ -35,6 +36,29 @@ def request(method: str, path: str, headers: dict[str, str] | None = None) -> ht
     return asyncio.run(send())
 
 
+class FakeResponse:
+    def __init__(self, payload: dict[str, object], status_code: int = 200) -> None:
+        self._payload = payload
+        self.status_code = status_code
+
+    def json(self) -> dict[str, object]:
+        return self._payload
+
+
+class FakeClient:
+    def __init__(self, responses: list[FakeResponse]) -> None:
+        self.responses = responses
+
+    def __enter__(self) -> "FakeClient":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        return None
+
+    def post(self, *_: object, **__: object) -> FakeResponse:
+        return self.responses.pop(0)
+
+
 class ApiBoundaryTests(unittest.TestCase):
     def test_health_endpoint_is_public_and_does_not_leak_configuration(self) -> None:
         response = request("GET", "/healthz")
@@ -46,6 +70,27 @@ class ApiBoundaryTests(unittest.TestCase):
         response = request("GET", "/readyz")
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()["status"], "not_ready")
+
+    def test_rpc_readiness_requires_matching_chain_and_deployed_code(self) -> None:
+        settings = Settings(
+            app_env="local",
+            auth_issuer=None,
+            auth_audience=None,
+            auth_jwks_url=None,
+            chain_id=31337,
+            rpc_url="http://rpc.test",
+            contract_address="0x0000000000000000000000000000000000000001",
+            cors_allowed_origins=("http://localhost:3000",),
+        )
+        matching_factory = lambda **_: FakeClient([
+            FakeResponse({"jsonrpc": "2.0", "id": 1, "result": "0x7a69"}),
+            FakeResponse({"jsonrpc": "2.0", "id": 2, "result": "0x6000"}),
+        ])
+        mismatching_factory = lambda **_: FakeClient([
+            FakeResponse({"jsonrpc": "2.0", "id": 1, "result": "0x1"}),
+        ])
+        self.assertTrue(verify_rpc_contract(settings, client_factory=matching_factory))
+        self.assertFalse(verify_rpc_contract(settings, client_factory=mismatching_factory))
 
     def test_audit_requires_bearer_authentication(self) -> None:
         response = request("GET", "/v1/audit")

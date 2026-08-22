@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 
 from .auth import Principal, require_principal
 from .config import Settings
+from .rpc import verify_rpc_contract
 
 
 def load_settings() -> Settings:
@@ -70,6 +71,8 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
     def readyz() -> dict[str, str]:
         if not selected_settings.contract_address:
             return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "contract not configured"})
+        if not verify_rpc_contract(selected_settings):
+            return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "chain or contract unavailable"})
         return {"status": "ready"}
 
     def principal_dependency(authorization: str | None = Header(default=None)) -> Principal:

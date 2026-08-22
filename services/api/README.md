@@ -7,7 +7,7 @@ This directory contains the first **fail-closed API boundary** for the platform.
 | Endpoint | Authentication | Current behavior |
 |---|---|---|
 | `GET /healthz` | Public | Returns a minimal liveness response without configuration, identity, or chain data. |
-| `GET /readyz` | Public | Returns `503` until a contract address is configured. Future versions must add RPC, indexer, database, and key-service readiness checks. |
+| `GET /readyz` | Public | Returns `503` until a contract address is configured and the configured RPC reports the expected chain ID plus non-empty deployed bytecode. Future versions must add indexer, database, and key-service readiness checks. |
 | `GET /v1/audit` | Bearer token required | Returns `501` until the canonical event indexer and audit projection exist. Missing or unconfigured authentication fails closed. |
 
 ## Configuration
