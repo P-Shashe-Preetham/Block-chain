@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect } from "chai";
 import { network } from "hardhat";
 
@@ -7,6 +8,9 @@ const MANAGER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MANAGER_ROLE"));
 const AUDITOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("AUDITOR_ROLE"));
 const USER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("USER_ROLE"));
 const DEFAULT_ADMIN_ROLE = ethers.ZeroHash;
+const GAS_BUDGETS = (JSON.parse(readFileSync("config/gas-budgets.json", "utf8")) as {
+  budgets: Record<string, number>;
+}).budgets;
 
 async function deployFixture() {
   const [admin, manager, auditor, user, recipient, outsider, replacement] = await ethers.getSigners();
@@ -176,6 +180,37 @@ describe("SecureAssetPlatform", function () {
     await expect(platform.connect(admin).revokeRole(DEFAULT_ADMIN_ROLE, admin.address)).to.revert(ethers);
     await expect(platform.connect(admin).renounceRole(DEFAULT_ADMIN_ROLE, admin.address)).to.revert(ethers);
     await expect(platform.connect(admin).approve(outsider.address, 0)).to.revert(ethers);
+  });
+
+  it("keeps implemented local operations below preliminary gas budgets", async function () {
+    const { platform, admin, manager, recipient, user, outsider } = await deployFixture();
+    const registerReceipt = await (await platform.connect(admin).registerIdentity(
+      outsider.address,
+      ethers.keccak256(ethers.toUtf8Bytes("did:example:gas-outsider")),
+    )).wait();
+    expect(registerReceipt!.gasUsed).to.be.lessThan(BigInt(GAS_BUDGETS.registerIdentity));
+
+    const roleReceipt = await (await platform.connect(admin).grantRole(AUDITOR_ROLE, outsider.address)).wait();
+    expect(roleReceipt!.gasUsed).to.be.lessThan(BigInt(GAS_BUDGETS.grantRole));
+
+    const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-GAS-001"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-gas-001"));
+    const mintReceipt = await (await platform.connect(manager).mintAndAllocateAsset(
+      recipient.address,
+      assetId,
+      metadataHash,
+    )).wait();
+    expect(mintReceipt!.gasUsed).to.be.lessThan(BigInt(GAS_BUDGETS.mintAndAllocateAsset));
+
+    const transferReceipt = await (await platform.connect(manager).transferAsset(
+      recipient.address,
+      user.address,
+      0,
+    )).wait();
+    expect(transferReceipt!.gasUsed).to.be.lessThan(BigInt(GAS_BUDGETS.transferAsset));
+
+    const pauseReceipt = await (await platform.connect(admin).pause()).wait();
+    expect(pauseReceipt!.gasUsed).to.be.lessThan(BigInt(GAS_BUDGETS.pause));
   });
 
   it("blocks state changes while paused", async function () {
