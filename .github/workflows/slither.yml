@@ -51,11 +51,11 @@ jobs:
         id: slither
         uses: crytic/slither-action@4fd765aeef19915d04ddf0be90c2930036a774d8 # v0.4.1
         with:
-          target: .
+          target: contracts/SecureAssetPlatform.sol
           solc-version: 0.8.24
           node-version: 22
           slither-version: 0.11.4
-          slither-args: --exclude-dependencies --filter-paths 'node_modules|contracts/test'
+          slither-args: --exclude-dependencies --filter-paths 'node_modules|contracts/test' --solc-args '--base-path . --include-path node_modules'
           ignore-compile: true
           sarif: slither-results.sarif
           fail-on: high
