@@ -70,25 +70,28 @@ Review `.env` before running anything. Use local-only test accounts and throwawa
 
 ### Install and validate the current MVP
 
-The current implementation is the Solidity/Hardhat contract MVP plus a fail-closed FastAPI service boundary. It does not yet include the full transaction API, event indexer, database projections, encrypted storage service, or frontend. Do not start undocumented services or install dependencies from missing paths.
+The current implementation is the Solidity/Hardhat contract MVP, a fail-closed FastAPI service boundary with transaction-state reference primitives, and dependency-free indexer projection primitives. It does not yet include the full transaction API, RPC event consumer, durable database projections, encrypted storage service, or frontend. Do not start undocumented services or install dependencies from missing paths.
 
 ```bash
 pnpm install --frozen-lockfile
-python3 -m pip install --requirement services/api/requirements.txt
+python3 -m pip install --require-hashes --requirement services/api/requirements.lock
 pnpm validate:environment -- --file .env.example --environment local
 pnpm validate:references
+pnpm validate:markdown
 pnpm lint
 pnpm test
 pnpm run test:coverage
 pnpm build
-PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'
+pnpm test:services
 ```
+
+A disposable local deployment can be generated with `pnpm deploy:local`. The script permits only the local/CI chain policy, verifies chain ID and deployed bytecode, and writes a manifest. Non-local environments remain blocked until an approved network and custody policy is recorded.
 
 The contract test suite covers identity lifecycle, RBAC, asset allocation, controlled transfer paths, access decisions, pause behavior, and rejection paths. The API boundary tests cover fail-closed authentication, readiness, request correlation, and production configuration rejection. Contract tests must continue to cover unauthorized minting, unauthorized role changes, duplicate allocation, ownership transfer, event emission, paused or emergency states, and any upgradeability policy. Do not deploy an unreviewed contract to a public network.
 
 ### Future API, indexer, storage, and frontend
 
-The full FastAPI transaction and audit API, event indexer, PostgreSQL/Redis projections, encrypted object storage, and the Next.js/mobile client are planned components. The current `services/api` directory contains only a fail-closed boundary and health/readiness endpoints. Full commands, dependencies, and endpoints must be added only in the pull request that introduces the corresponding component and tests.
+The full FastAPI transaction and audit API, RPC event consumer, PostgreSQL/Redis projections, encrypted object storage, and the Next.js/mobile client are planned components. The current `services/api` directory contains a fail-closed boundary and typed local transaction-state reference primitives; `services/indexer` contains dependency-free projection primitives. Full commands, dependencies, and endpoints must be added only in the pull request that introduces the corresponding component and tests.
 
 ### Run quality checks
 
@@ -97,11 +100,12 @@ The current repository quality gate is:
 ```bash
 pnpm validate:environment -- --file .env.example --environment local
 pnpm validate:references
+pnpm validate:markdown
 pnpm lint
 pnpm test
 pnpm run test:coverage
 pnpm build
-PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'
+pnpm test:services
 ```
 
 Future transaction API, indexer, browser, storage, and accessibility checks must become mandatory CI checks when those components exist. Accessibility validation should combine automation with manual keyboard and screen-reader review.[3]

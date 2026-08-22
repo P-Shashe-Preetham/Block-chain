@@ -172,7 +172,7 @@ Log the operation identifier, service component, chain/network, contract, transa
 
 ## Deployment boundaries
 
-Local development uses a disposable blockchain network and test accounts. The proposal's Hyperledger Fabric, private Polygon, and other permissioned-EVM options remain network-strategy candidates rather than selected deployments. Testnet deployment requires approved contracts, reproducible scripts, verified artifacts, operator runbooks, and monitoring. Production deployment additionally requires organizational ownership, network and custody approval, independent security review, privacy and legal review, incident response, backup/recovery, and a rollback or emergency procedure that does not assume immutable state can be erased.
+Local development uses a disposable blockchain network and test accounts. The proposal's Hyperledger Fabric, private Polygon, and other permissioned-EVM options remain network-strategy candidates rather than selected deployments. The deployment script enforces the environment policy, rejects non-local environments until an explicit network approval is recorded, verifies the connected chain ID and deployed bytecode, and writes a manifest containing the contract address, chain identity, compiler/optimizer/EVM settings, bytecode hash, ABI hash, source commit, deployer, custody declaration, and timestamp. Testnet deployment requires approved contracts, reproducible scripts, verified artifacts, operator runbooks, and monitoring. Production deployment additionally requires organizational ownership, network and custody approval, independent security review, privacy and legal review, incident response, backup/recovery, and a rollback or emergency procedure that does not assume immutable state can be erased.
 
 ## Repository structure
 
@@ -182,7 +182,7 @@ Local development uses a disposable blockchain network and test accounts. The pr
 ├── contracts/                        # Solidity contracts and deployment scripts
 │   ├── SecureAssetPlatform.sol       # Executable MVP identity/RBAC/NFT baseline
 │   ├── test/                         # Contract behavior and negative tests
-│   └── scripts/                      # Local/testnet operations
+│   └── scripts/                      # Local operations and guarded deployment
 ├── services/api/                     # FastAPI service
 │   ├── app/                          # Routes, services, policies, models
 │   └── tests/                        # API and authorization tests

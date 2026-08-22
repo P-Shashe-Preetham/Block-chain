@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/blockchain-secure-platform/deployment-manifest.schema.json",
+  "title": "SecureAssetPlatform deployment manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "environment",
+    "networkName",
+    "chainId",
+    "rpcIdentity",
+    "contractName",
+    "contractAddress",
+    "bytecodeHash",
+    "abiHash",
+    "sourceCommit",
+    "compiler",
+    "optimizer",
+    "evmVersion",
+    "deployer",
+    "deployedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"type": "integer", "const": 1},
+    "environment": {"type": "string", "enum": ["local", "ci", "development", "testnet", "pilot", "production"]},
+    "networkName": {"type": "string", "minLength": 1},
+    "chainId": {"type": "integer", "minimum": 1},
+    "rpcIdentity": {"type": "string", "minLength": 1},
+    "contractName": {"type": "string", "const": "SecureAssetPlatform"},
+    "contractAddress": {"type": "string", "pattern": "^0x[a-fA-F0-9]{40}$"},
+    "bytecodeHash": {"type": "string", "pattern": "^0x[a-fA-F0-9]{64}$"},
+    "abiHash": {"type": "string", "pattern": "^0x[a-fA-F0-9]{64}$"},
+    "sourceCommit": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
+    "compiler": {"type": "string", "const": "0.8.24"},
+    "optimizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "runs"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "runs": {"type": "integer", "minimum": 1}
+      }
+    },
+    "evmVersion": {"type": "string", "const": "cancun"},
+    "deployer": {"type": "string", "pattern": "^0x[a-fA-F0-9]{40}$"},
+    "deployerCustody": {"type": "string", "minLength": 1},
+    "deployedAt": {"type": "string", "format": "date-time"},
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "explorerUrl": {"type": "string", "format": "uri"},
+        "manifestSignature": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
