@@ -17,6 +17,7 @@
     "validate:environment": "python3 scripts/validate_environment.py",
     "lint": "hardhat build && tsc --noEmit",
     "test": "hardhat test",
+    "test:api": "PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'",
     "test:coverage": "hardhat test --coverage"
   },
   "devDependencies": {

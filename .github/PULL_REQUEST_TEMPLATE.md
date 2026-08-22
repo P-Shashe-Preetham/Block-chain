@@ -41,7 +41,8 @@ pnpm lint
 pnpm test
 pnpm run test:coverage
 pnpm build
-# Add API, indexer, browser, storage, or accessibility commands only when implemented.
+pnpm test:api
+# Add transaction API, indexer, browser, storage, or accessibility commands only when implemented.
 ```
 
 ## Accessibility review

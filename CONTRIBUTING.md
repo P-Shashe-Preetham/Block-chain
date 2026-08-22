@@ -42,9 +42,10 @@ pnpm lint
 pnpm test
 pnpm run test:coverage
 pnpm build
+pnpm test:api
 ```
 
-The current checkout implements the Solidity/Hardhat MVP only. FastAPI, indexer, database, storage, and frontend commands must be added to this list in the same pull request that introduces those components; a clean checkout must never invoke a missing path or silently ignore a failed setup step.
+The current checkout implements the Solidity/Hardhat MVP and a fail-closed FastAPI boundary. Full transaction API, indexer, database, storage, and frontend commands must be added to this list in the same pull request that introduces those components; a clean checkout must never invoke a missing path or silently ignore a failed setup step.
 
 ### 4. Implement the change
 
@@ -81,7 +82,7 @@ Before requesting final review, confirm the following:
 - The change has a linked issue or an approved RFC.
 - The title and commits follow the repository's Conventional Commits policy.
 - [ ] Tests cover expected behavior, rejection paths, and relevant authorization boundaries.
-- [ ] `pnpm validate:environment`, `pnpm validate:references`, `pnpm lint`, `pnpm test`, `pnpm run test:coverage`, and `pnpm build` pass for the current MVP; future-service checks are listed only after their components exist.
+- [ ] `pnpm validate:environment`, `pnpm validate:references`, `pnpm lint`, `pnpm test`, `pnpm run test:coverage`, `pnpm build`, and `pnpm test:api` pass for the current MVP/API boundary; future-service checks are listed only after their components exist.
 - Contract changes include event, access-control, reentrancy, upgradeability, and gas-impact review as applicable.
 - API changes include validation, authentication/authorization, error handling, and migration considerations.
 - UI changes include keyboard navigation, visible focus, semantic labels, and an automated accessibility check where practical.
