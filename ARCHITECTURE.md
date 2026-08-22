@@ -118,7 +118,7 @@ Hashing sensitive data is not automatically privacy-preserving if the source can
 
 ## Ownership and access are separate
 
-NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset status, asset policy, and approval state. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs.
+NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset status, asset policy, and approval state. Managers can set an auditable per-asset/per-action requester rule with an allow/deny value and optional expiry; absent rules use the bounded MVP fallback for owners, managers, and auditors. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs. A future policy service must extend this baseline with tenant scope, delegation, reason codes, policy versions, and revocation workflows.
 
 ## Asset lifecycle
 

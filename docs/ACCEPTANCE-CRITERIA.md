@@ -23,23 +23,24 @@ These criteria define what must be demonstrated for a controlled local or testne
 | AC-08 | A manager transfers to an active recipient | The policy-aware transfer is submitted | Ownership changes once and the standard ERC-721 transfer event is emitted; an owner alone cannot transfer |
 | AC-09 | An approval is requested, a non-manager calls an inherited transfer path, or an owner is inactive | The approval or transfer is attempted | The transaction reverts because standard approvals are disabled and controlled transfers are manager-only |
 | AC-10 | An asset is suspended, revoked, or retired | Access or transfer is requested | The asset remains auditable, but access is denied and every ownership-changing path is blocked; only an approved lifecycle transition can restore an asset from suspension |
+| AC-11 | A manager configures a requester/action rule | The requester submits an access decision before expiry | The rule’s explicit allow or deny overrides the bounded fallback policy and `AccessRuleSet` plus `AccessDecision` events are emitted |
 
 ## Audit and verification
 
 | ID | Given | When | Then |
 |---|---|---|---|
-| AC-11 | An identity, key replacement, role, mint, allocation, transfer, access decision, pause, or status operation commits | The event consumer processes the transaction | The dedicated structured event is indexed idempotently with transaction hash, block, actor, and confirmation status |
-| AC-12 | A transaction reverts | The API reports operation status | The operation is reported as failed or reverted; no committed-event record claims success |
-| AC-13 | An auditor verifies an asset | The auditor has the network, contract, ABI, token ID, organizational asset ID, and metadata hash | The auditor can reproduce owner, lifecycle events, access decisions, and integrity reference independently of the UI |
+| AC-12 | An identity, key replacement, role, mint, allocation, transfer, access decision, pause, status, or access-rule operation commits | The event consumer processes the transaction | The dedicated structured event is indexed idempotently with transaction hash, block, actor, and confirmation status |
+| AC-13 | A transaction reverts | The API reports operation status | The operation is reported as failed or reverted; no committed-event record claims success |
+| AC-14 | An auditor verifies an asset | The auditor has the network, contract, ABI, token ID, organizational asset ID, and metadata hash | The auditor can reproduce owner, lifecycle events, access decisions, and integrity reference independently of the UI |
 
 ## Security and operations
 
 | ID | Given | When | Then |
 |---|---|---|---|
-| AC-14 | The contract is paused | A state-changing identity, role, mint, transfer, or asset-status operation is attempted | The operation is blocked until an authorized active administrator unpauses it |
-| AC-15 | An off-chain asset is uploaded | The payload is stored | The payload is encrypted with an AES-256 data key before IPFS/object storage, the key is controlled separately, and only an approved CID/content reference is recorded on-chain |
-| AC-16 | A dependency or workflow changes | A pull request is opened | CI, dependency review, ownership review, and security checks run before merge |
-| AC-17 | A deployment or employee offboarding/recovery is proposed | The release or lifecycle gate is evaluated | Contract review, key custody, network governance, privacy/legal review, recovery, asset review/reassignment, monitoring, and incident evidence are linked |
+| AC-15 | The contract is paused | A state-changing identity, role, mint, transfer, asset-status, or access-rule operation is attempted | The operation is blocked until an authorized active administrator unpauses it |
+| AC-16 | An off-chain asset is uploaded | The payload is stored | The payload is encrypted with an AES-256 data key before IPFS/object storage, the key is controlled separately, and only an approved CID/content reference is recorded on-chain |
+| AC-17 | A dependency or workflow changes | A pull request is opened | CI, dependency review, ownership review, and security checks run before merge |
+| AC-18 | A deployment or employee offboarding/recovery is proposed | The release or lifecycle gate is evaluated | Contract review, key custody, network governance, privacy/legal review, recovery, asset review/reassignment, monitoring, and incident evidence are linked |
 
 ## Evidence package
 

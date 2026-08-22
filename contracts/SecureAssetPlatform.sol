@@ -22,6 +22,12 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         uint64 registeredAt;
     }
 
+    struct AccessRule {
+        bool exists;
+        bool allowed;
+        uint64 expiresAt;
+    }
+
     enum AssetStatus {
         ACTIVE,
         SUSPENDED,
@@ -36,6 +42,7 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     mapping(uint256 => bytes32) public assetIdByToken;
     mapping(uint256 => bytes32) public assetMetadataHash;
     mapping(uint256 => AssetStatus) public assetStatus;
+    mapping(uint256 => mapping(bytes32 => mapping(address => AccessRule))) public accessRules;
 
     event IdentityRegistered(address indexed subject, bytes32 indexed didHash);
     event IdentityStatusChanged(address indexed subject, bool isActive);
@@ -48,6 +55,14 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         bytes32 metadataHash
     );
     event AccessDecision(address indexed requester, uint256 indexed tokenId, bytes32 indexed action, bool granted);
+    event AccessRuleSet(
+        uint256 indexed tokenId,
+        bytes32 indexed action,
+        address indexed requester,
+        bool allowed,
+        uint64 expiresAt,
+        address actor
+    );
     event AssetStatusChanged(uint256 indexed tokenId, AssetStatus status, address indexed actor);
     event EmergencyStateChanged(bool paused);
 
@@ -63,6 +78,7 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     error AccessActionMissing();
     error AssetNotFound();
     error AssetNotTransferable();
+    error AccessRuleExpiryInvalid();
     error InvalidAssetStatusTransition();
     error AdminMustRemainActive();
     error DefaultAdminImmutable();
@@ -271,6 +287,27 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     }
 
     /**
+     * @notice Sets a policy override for one requester, asset, and action.
+     * @dev A rule can grant or deny access independently of token ownership. An expiry of zero means no expiry.
+     */
+    function setAccessRule(uint256 tokenId, address requester, bytes32 action, bool allowed, uint64 expiresAt)
+        external
+        onlyRole(MANAGER_ROLE)
+        onlyActiveIdentity(msg.sender)
+        whenNotPaused
+    {
+        if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
+        if (requester == address(0)) revert InvalidAddress();
+        if (identityRegistry[requester].registeredAt == 0) revert IdentityNotFound();
+        if (!identityRegistry[requester].isActive) revert IdentityInactive();
+        if (action == bytes32(0)) revert AccessActionMissing();
+        if (expiresAt != 0 && expiresAt < block.timestamp) revert AccessRuleExpiryInvalid();
+
+        accessRules[tokenId][action][requester] = AccessRule({exists: true, allowed: allowed, expiresAt: expiresAt});
+        emit AccessRuleSet(tokenId, action, requester, allowed, expiresAt, msg.sender);
+    }
+
+    /**
      * @notice Records an explicit access decision without reverting on denial.
      * @dev Ownership and access are separate: owners, managers, and auditors may read by policy;
      *      transfer authority is manager-only.
@@ -283,9 +320,16 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     {
         if (action == bytes32(0)) revert AccessActionMissing();
         address owner = _ownerOf(tokenId);
-        granted = owner != address(0)
-            && assetStatus[tokenId] == AssetStatus.ACTIVE
-            && (owner == msg.sender || hasRole(MANAGER_ROLE, msg.sender) || hasRole(AUDITOR_ROLE, msg.sender));
+        if (owner != address(0) && assetStatus[tokenId] == AssetStatus.ACTIVE) {
+            AccessRule memory rule = accessRules[tokenId][action][msg.sender];
+            if (rule.exists) {
+                granted = rule.allowed && (rule.expiresAt == 0 || rule.expiresAt >= block.timestamp);
+            } else {
+                granted = owner == msg.sender
+                    || hasRole(MANAGER_ROLE, msg.sender)
+                    || hasRole(AUDITOR_ROLE, msg.sender);
+            }
+        }
         emit AccessDecision(msg.sender, tokenId, action, granted);
     }
 

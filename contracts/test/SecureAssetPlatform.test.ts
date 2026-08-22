@@ -101,6 +101,16 @@ describe("SecureAssetPlatform", function () {
     await expect(platform.connect(user).requestAccess(0, action))
       .to.emit(platform, "AccessDecision")
       .withArgs(user.address, 0, action, false);
+    await expect(platform.connect(manager).setAccessRule(0, user.address, action, true, 0))
+      .to.emit(platform, "AccessRuleSet")
+      .withArgs(0, action, user.address, true, 0, manager.address);
+    await expect(platform.connect(user).requestAccess(0, action))
+      .to.emit(platform, "AccessDecision")
+      .withArgs(user.address, 0, action, true);
+    await expect(platform.connect(manager).setAccessRule(0, user.address, action, false, 0)).not.to.revert(ethers);
+    await expect(platform.connect(user).requestAccess(0, action))
+      .to.emit(platform, "AccessDecision")
+      .withArgs(user.address, 0, action, false);
     await expect(platform.connect(auditor).requestAccess(0, action))
       .to.emit(platform, "AccessDecision")
       .withArgs(auditor.address, 0, action, true);
