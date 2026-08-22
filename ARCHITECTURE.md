@@ -76,7 +76,7 @@ flowchart TB
 
 ### Identity reference
 
-The contract stores a stable subject reference and DID hash, using wallet-based ECDSA/secp256k1 authentication for the EVM MVP. It should not store raw identity documents, credentials, biometric data, private contact details, or secrets. This is a blockchain-backed DID registry/reference, not a complete W3C SSI ecosystem. Verification methods, DID-document resolution, rotation, suspension, revocation, and recovery remain explicit lifecycle decisions.
+The contract stores a stable subject reference and a unique DID-hash commitment, using wallet-based ECDSA/secp256k1 authentication for the EVM MVP. The address-to-DID-hash and DID-hash-to-address mappings prevent two active registry entries from claiming the same commitment, but they do not constitute a complete DID method. The contract should not store raw identity documents, credentials, biometric data, private contact details, or secrets. This is a blockchain-backed DID registry/reference, not a complete W3C SSI ecosystem. Verification methods, DID-document resolution, rotation, suspension, revocation, and recovery remain explicit lifecycle decisions.
 
 ### Roles and permissions
 
@@ -84,11 +84,11 @@ The default roles are `ADMIN`, `MANAGER`, `AUDITOR`, and `USER`. The contract sh
 
 ### Asset tokens
 
-Each asset token has a unique token identifier, a unique organizational asset ID such as `BEL-LAB-001`, a metadata hash, an identity reference or owner address, and lifecycle events. The MVP rejects duplicate asset IDs and uses ERC-721 for unique assets; ERC-1155 remains a future option for batches or semi-fungible licenses. Physical ownership is not inferred from token ownership alone: a QR/NFC tag and organizational registration are required for physical-asset verification. The policy separates creation, allocation, access, transfer, and emergency-recovery authority.
+Each asset token has a unique token identifier, a unique organizational asset ID such as `BEL-LAB-001`, a metadata hash, an identity reference or owner address, an explicit operational status, and lifecycle events. The MVP rejects duplicate asset IDs and uses ERC-721 for unique assets; ERC-1155 remains a future option for batches or semi-fungible licenses. Active assets may be accessed or transferred through policy; suspended, revoked, and retired assets remain auditable but are blocked from access and transfer. Physical ownership is not inferred from token ownership alone: a QR/NFC tag and organizational registration are required for physical-asset verification. The policy separates creation, allocation, access, transfer, lifecycle status, and emergency-recovery authority.
 
 ### Events
 
-Events should be stable, documented, and sufficient for rebuilding projections. Representative events include `IdentityRegistered`, `IdentityUpdated`, `IdentityRevoked`, `RoleGranted`, `RoleRevoked`, `AssetMinted`, `AssetAllocated`, `AssetTransferred`, `AssetMetadataUpdated`, and `EmergencyStateChanged`. Event payloads should use identifiers and hashes rather than personal data.
+Events should be stable, documented, and sufficient for rebuilding projections. Representative events include `IdentityRegistered`, `IdentityUpdated`, `IdentityRevoked`, `RoleGranted`, `RoleRevoked`, `AssetMinted`, `AssetAllocated`, `AssetTransferred`, `AssetStatusChanged`, `AssetMetadataUpdated`, and `EmergencyStateChanged`. Event payloads should use identifiers and hashes rather than personal data.
 
 ## Trust boundaries and authorization
 
@@ -118,7 +118,7 @@ Hashing sensitive data is not automatically privacy-preserving if the source can
 
 ## Ownership and access are separate
 
-NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset policy, and approval state. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs.
+NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset status, asset policy, and approval state. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs.
 
 ## Asset lifecycle
 

@@ -22,11 +22,20 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         uint64 registeredAt;
     }
 
+    enum AssetStatus {
+        ACTIVE,
+        SUSPENDED,
+        REVOKED,
+        RETIRED
+    }
+
     uint256 private _nextTokenId;
     mapping(address => IdentityProfile) public identityRegistry;
+    mapping(bytes32 => address) public identityByDidHash;
     mapping(bytes32 => bool) public assetIdExists;
     mapping(uint256 => bytes32) public assetIdByToken;
     mapping(uint256 => bytes32) public assetMetadataHash;
+    mapping(uint256 => AssetStatus) public assetStatus;
 
     event IdentityRegistered(address indexed subject, bytes32 indexed didHash);
     event IdentityStatusChanged(address indexed subject, bool isActive);
@@ -39,16 +48,22 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         bytes32 metadataHash
     );
     event AccessDecision(address indexed requester, uint256 indexed tokenId, bytes32 indexed action, bool granted);
+    event AssetStatusChanged(uint256 indexed tokenId, AssetStatus status, address indexed actor);
     event EmergencyStateChanged(bool paused);
 
     error InvalidAddress();
     error IdentityAlreadyRegistered();
+    error IdentityDidAlreadyRegistered();
     error IdentityNotFound();
     error IdentityInactive();
     error IdentityDidMissing();
     error AssetIdMissing();
     error AssetAlreadyRegistered();
     error AssetMetadataMissing();
+    error AccessActionMissing();
+    error AssetNotFound();
+    error AssetNotTransferable();
+    error InvalidAssetStatusTransition();
     error AdminMustRemainActive();
     error DefaultAdminImmutable();
     error UnauthorizedTransfer();
@@ -83,12 +98,14 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         if (subject == address(0)) revert InvalidAddress();
         if (didHash == bytes32(0)) revert IdentityDidMissing();
         if (identityRegistry[subject].registeredAt != 0) revert IdentityAlreadyRegistered();
+        if (identityByDidHash[didHash] != address(0)) revert IdentityDidAlreadyRegistered();
 
         identityRegistry[subject] = IdentityProfile({
             didHash: didHash,
             isActive: true,
             registeredAt: uint64(block.timestamp)
         });
+        identityByDidHash[didHash] = subject;
         _grantRole(USER_ROLE, subject);
         emit IdentityRegistered(subject, didHash);
     }
@@ -125,6 +142,7 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         if (identityRegistry[oldSubject].registeredAt == 0) revert IdentityNotFound();
         if (identityRegistry[newSubject].registeredAt != 0) revert IdentityAlreadyRegistered();
         if (newDidHash == bytes32(0)) revert IdentityDidMissing();
+        if (identityByDidHash[newDidHash] != address(0)) revert IdentityDidAlreadyRegistered();
         if (hasRole(DEFAULT_ADMIN_ROLE, oldSubject)) revert AdminMustRemainActive();
 
         bool wasManager = hasRole(MANAGER_ROLE, oldSubject);
@@ -140,6 +158,7 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
             isActive: true,
             registeredAt: uint64(block.timestamp)
         });
+        identityByDidHash[newDidHash] = newSubject;
         _grantRole(USER_ROLE, newSubject);
         if (wasManager) _grantRole(MANAGER_ROLE, newSubject);
         if (wasAuditor) _grantRole(AUDITOR_ROLE, newSubject);
@@ -217,6 +236,41 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     }
 
     /**
+     * @notice Changes the operational status of an existing asset.
+     * @dev Suspended, revoked, and retired assets remain auditable but cannot be accessed or transferred.
+     */
+    function setAssetStatus(uint256 tokenId, AssetStatus status)
+        external
+        onlyRole(MANAGER_ROLE)
+        onlyActiveIdentity(msg.sender)
+        whenNotPaused
+    {
+        if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
+        AssetStatus currentStatus = assetStatus[tokenId];
+        if (!_isValidAssetStatusTransition(currentStatus, status)) revert InvalidAssetStatusTransition();
+        assetStatus[tokenId] = status;
+        emit AssetStatusChanged(tokenId, status, msg.sender);
+    }
+
+    function _isValidAssetStatusTransition(AssetStatus currentStatus, AssetStatus nextStatus)
+        internal
+        pure
+        returns (bool)
+    {
+        if (currentStatus == AssetStatus.ACTIVE) {
+            return nextStatus == AssetStatus.SUSPENDED
+                || nextStatus == AssetStatus.REVOKED
+                || nextStatus == AssetStatus.RETIRED;
+        }
+        if (currentStatus == AssetStatus.SUSPENDED) {
+            return nextStatus == AssetStatus.ACTIVE
+                || nextStatus == AssetStatus.REVOKED
+                || nextStatus == AssetStatus.RETIRED;
+        }
+        return currentStatus == AssetStatus.REVOKED && nextStatus == AssetStatus.RETIRED;
+    }
+
+    /**
      * @notice Records an explicit access decision without reverting on denial.
      * @dev Ownership and access are separate: owners, managers, and auditors may read by policy;
      *      transfer authority is manager-only.
@@ -227,8 +281,10 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         whenNotPaused
         returns (bool granted)
     {
+        if (action == bytes32(0)) revert AccessActionMissing();
         address owner = _ownerOf(tokenId);
         granted = owner != address(0)
+            && assetStatus[tokenId] == AssetStatus.ACTIVE
             && (owner == msg.sender || hasRole(MANAGER_ROLE, msg.sender) || hasRole(AUDITOR_ROLE, msg.sender));
         emit AccessDecision(msg.sender, tokenId, action, granted);
     }
@@ -244,6 +300,8 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         whenNotPaused
     {
         if (!identityRegistry[to].isActive) revert IdentityInactive();
+        if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
+        if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
         _transfer(from, to, tokenId);
     }
 
@@ -273,6 +331,8 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         onlyActiveIdentity(msg.sender)
         whenNotPaused
     {
+        if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
+        if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
         _transfer(from, to, tokenId);
     }
 
@@ -283,6 +343,8 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         onlyActiveIdentity(msg.sender)
         whenNotPaused
     {
+        if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
+        if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
         _safeTransfer(from, to, tokenId, data);
     }
 
@@ -297,6 +359,7 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     {
         address from = _ownerOf(tokenId);
         if (from != address(0) && !identityRegistry[from].isActive) revert IdentityInactive();
+        if (from != address(0) && assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
         if (to != address(0) && !identityRegistry[to].isActive) revert IdentityInactive();
         return super._update(to, tokenId, auth);
     }

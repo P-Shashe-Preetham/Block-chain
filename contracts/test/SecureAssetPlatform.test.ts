@@ -35,6 +35,9 @@ describe("SecureAssetPlatform", function () {
     await expect(
       platform.registerIdentity(user.address, ethers.keccak256(ethers.toUtf8Bytes("duplicate"))),
     ).to.revert(ethers);
+    await expect(
+      platform.registerIdentity(replacement.address, ethers.keccak256(ethers.toUtf8Bytes("did:example:user"))),
+    ).to.revert(ethers);
 
     const replacementDid = ethers.keccak256(ethers.toUtf8Bytes("did:example:replacement"));
     await expect(platform.connect(admin).replaceIdentityKey(user.address, replacement.address, replacementDid))
@@ -60,6 +63,33 @@ describe("SecureAssetPlatform", function () {
     await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash)).to.revert(ethers);
   });
 
+  it("blocks access and transfer for suspended assets until a manager restores them", async function () {
+    const { platform, manager, user, recipient } = await deployFixture();
+    const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-STATUS-001"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-status-001"));
+    const action = ethers.keccak256(ethers.toUtf8Bytes("READ_ASSET"));
+
+    await platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash);
+    await expect(platform.connect(manager).setAssetStatus(0, 1))
+      .to.emit(platform, "AssetStatusChanged")
+      .withArgs(0, 1, manager.address);
+    expect(await platform.assetStatus(0)).to.equal(1);
+    await expect(platform.connect(manager).requestAccess(0, action))
+      .to.emit(platform, "AccessDecision")
+      .withArgs(manager.address, 0, action, false);
+    await expect(platform.connect(manager).transferAsset(recipient.address, user.address, 0)).to.revert(ethers);
+
+    await platform.connect(manager).setAssetStatus(0, 0);
+    await expect(platform.connect(manager).setAssetStatus(0, 0)).to.revert(ethers);
+    await expect(platform.connect(manager).transferAsset(recipient.address, user.address, 0)).not.to.revert(ethers);
+    expect(await platform.ownerOf(0)).to.equal(user.address);
+
+    await platform.connect(manager).setAssetStatus(0, 2);
+    await expect(platform.connect(manager).setAssetStatus(0, 0)).to.revert(ethers);
+    await platform.connect(manager).setAssetStatus(0, 3);
+    await expect(platform.connect(manager).setAssetStatus(0, 0)).to.revert(ethers);
+  });
+
   it("records access decisions without reverting on denial", async function () {
     const { platform, manager, user, auditor, recipient } = await deployFixture();
     const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-002"));
@@ -67,6 +97,7 @@ describe("SecureAssetPlatform", function () {
     const action = ethers.keccak256(ethers.toUtf8Bytes("READ_ASSET"));
     await platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash);
 
+    await expect(platform.connect(user).requestAccess(0, ethers.ZeroHash)).to.revert(ethers);
     await expect(platform.connect(user).requestAccess(0, action))
       .to.emit(platform, "AccessDecision")
       .withArgs(user.address, 0, action, false);
