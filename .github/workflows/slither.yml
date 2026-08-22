@@ -37,7 +37,7 @@ jobs:
           target: .
           solc-version: 0.8.24
           node-version: 22
-          slither-version: 0.11.6
+          slither-version: 0.11.4
           slither-args: --exclude-dependencies --filter-paths 'node_modules|contracts/test'
           sarif: slither-results.sarif
           fail-on: high
