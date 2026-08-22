@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/actions/workflows/ci.yml/badge.svg)](https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/badge)](https://securityscorecards.dev/viewer/?uri=github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management)
+[![OpenSSF Best Practices](https://img.shields.io/badge/OpenSSF%20Best%20Practices-assessment%20pending-lightgrey)](https://www.bestpractices.dev/en/projects/new)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/commits-conventional-blue.svg)](https://www.conventionalcommits.org/)
 
@@ -168,6 +169,7 @@ A verifier reads contract state and events, confirms the token and organizationa
 │   ├── config/               # Shared configuration and validation
 │   ├── types/                # Shared domain types and schemas
 │   └── ui/                   # Reusable accessible UI components
+├── MAINTENANCE.md             # Maintenance cadence and release evidence
 ├── docs/
 │   ├── ADR/                      # Architecture Decision Records
 │   ├── COMPLIANCE-REPORT.md      # Requirement and production-gate assessment
@@ -187,6 +189,10 @@ Treat private keys as high-impact credentials. Use a hardware-backed or managed 
 The platform must not expose personal data through public events, token metadata, logs, error messages, or analytics. Hashing data does not automatically remove privacy risk when the underlying data can be recovered or linked. Define retention, erasure, revocation, subject-access, and legal-review procedures before storing identity-related data.
 
 The repository's `SECURITY.md`, `ARCHITECTURE.md`, ADRs, [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md), [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md), [`docs/ENCRYPTION-KEY-MANAGEMENT.md`](docs/ENCRYPTION-KEY-MANAGEMENT.md), and [`docs/SECURITY-SCANNING-STATUS.md`](docs/SECURITY-SCANNING-STATUS.md) describe the intended controls and current evidence boundaries. They do not replace an organization-specific security assessment.
+
+## Maintenance and assurance status
+
+This prototype is maintained through reviewed pull requests, scheduled dependency and security workflows, release automation, and the recurring checks documented in [`MAINTENANCE.md`](MAINTENANCE.md). The official [OpenSSF Best Practices assessment](https://www.bestpractices.dev/en/projects/new) is not yet registered for this project; the neutral badge above intentionally indicates **assessment pending** rather than claiming a completed badge level.
 
 ## Project status
 

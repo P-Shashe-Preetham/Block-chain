@@ -16,6 +16,17 @@ This document records the remediation applied to the repository's OpenSSF Scorec
 | Vulnerable transitive dependencies | Migrated from Hardhat 2 to Hardhat 3, removed the vulnerable ethers v5 dependency path, retained explicit narrow plugins, and kept a moderate-or-higher CI audit gate | `package.json`, `pnpm-lock.yaml`, `hardhat.config.ts`, `.github/workflows/ci.yml` |
 | Missing reference/security validation | Existing reference validator and CI checks remain active alongside the new security gates | `scripts/validate_references.py`, `.github/workflows/ci.yml` |
 
+## Current alert remediation status
+
+The current dashboard alerts are tracked explicitly rather than dismissed without evidence:
+
+| Alert | Signal | Severity shown | Current status and evidence |
+|---:|---|---|---|
+| #19 | Maintained | High | Repository-side maintenance evidence has been strengthened with `MAINTENANCE.md`, scheduled workflows, Dependabot, release automation, contribution guidance, and security policy. The remaining age component is detector-controlled and resolves only after the repository has sufficient history. |
+| #17 | Code-Review | High | `main` is protected and requires reviewed pull requests, one approving review, conversation resolution, linear history, and successful security checks. Historical direct commits cannot be retroactively converted into approved changesets; an eligible collaborator must approve future remediation PRs for the historical ratio to improve. |
+| #20 | SAST | Medium | CodeQL runs successfully on current pushes and pull requests. The remaining Scorecard ratio reflects that the workflow was introduced after earlier commits; historical commits cannot be retroactively scanned by a workflow that did not exist at those revisions. |
+| #16 | CII-Best-Practices | Low | The repository now links the official OpenSSF Best Practices assessment and clearly marks it as pending. Registration and assessment require the repository owner to authenticate at [bestpractices.dev](https://www.bestpractices.dev/en/projects/new) and complete the external questionnaire. |
+
 ## Remaining external or upstream limits
 
 The dependency audit is now clean: `pnpm audit --audit-level=moderate` reports no known vulnerabilities, and the Hardhat 3 lockfile contains no `elliptic` package. The previous low advisory was removed by eliminating the Hardhat 2 ethers v5 dependency path rather than forcing an unpublished package version. Fuzzing evidence now includes both the passing Echidna workflow and the passing TypeScript fast-check property suite.
@@ -24,13 +35,13 @@ The dependency audit is now clean: `pnpm audit --audit-level=moderate` reports n
 |---|---|---|
 | Branch protection score | Branch protection is controlled by GitHub repository settings rather than source files; the documented policy is the configuration to verify | Verify that main requires one approving review, successful CodeQL/Echidna/Scorecard/CI checks, linear history, conversation resolution, no force pushes, and administrator enforcement |
 | Code-review score | Historical direct pushes cannot be converted into reviewed changesets; the repository now requires reviewed pull requests for future changes | Continue using pull requests and obtain one approval before merging |
-| Maintained score | The repository's age/history is evaluated by Scorecard | Continue maintained releases and reassess after the repository history matures |
-| CII Best Practices score | A project badge requires registration and completion on bestpractices.dev | Register the project and complete the external assessment when ownership and contacts are ready |
+| Maintained score | The repository's age/history is evaluated by Scorecard, including the detector's recent-commit and issue-activity inputs | Continue the documented maintenance cadence, keep publishing releases and updates, and reassess after the repository history matures |
+| CII Best Practices score | Scorecard reads the official OpenSSF Best Practices service; a source-controlled link cannot create an assessment or badge | The repository owner must [log in with GitHub and register the project](https://www.bestpractices.dev/en/projects/new), then complete the external assessment |
 | GitHub alert API visibility | The current integration returned HTTP 403 for code-scanning, Dependabot, and secret-scanning alert endpoints | Review alerts in the repository's Security tab or grant the integration the required read scopes |
 
 ## Validation baseline
 
-The repository must pass `pnpm install --frozen-lockfile`, `pnpm validate:references`, `pnpm audit --audit-level=moderate`, strict TypeScript lint, Hardhat compilation, the contract test suite, and configuration parsing. CodeQL and Echidna results are produced by GitHub Actions after the workflow files are pushed; they cannot be fully reproduced by the local Hardhat test command alone. At the time of the latest branch-protection update, the only remote branch was `main`; all historical Dependabot pull requests were already merged, so there was no additional branch to merge.
+The repository must pass `pnpm install --frozen-lockfile`, `pnpm validate:references`, `pnpm audit --audit-level=moderate`, strict TypeScript lint, Hardhat compilation, the contract test suite, coverage, and configuration parsing. CodeQL, Echidna, and Scorecard results are produced by GitHub Actions after workflow files are pushed; they cannot be fully reproduced by the local Hardhat test command alone. At the time of the latest branch-protection update, the only remote branch was `main`; all remediation branches were merged and deleted, so there is no additional branch to merge.
 
 ## References
 
