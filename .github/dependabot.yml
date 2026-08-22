@@ -19,9 +19,19 @@ updates:
       development-dependencies:
         dependency-type: development
 
-  # Re-enable the pip ecosystems in the same change that adds a tracked Python
-  # manifest for services/api or another Python service. The current repository
-  # intentionally has no Python dependency manifest.
+  - package-ecosystem: pip
+    directory: "/services/api"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:30"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: "build"
+      include: "scope"
 
   - package-ecosystem: github-actions
     directory: "/"

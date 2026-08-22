@@ -21,8 +21,8 @@ The current `OidcJwksTokenVerifier` is an explicit integration boundary that ref
 From the repository root:
 
 ```bash
-python3 -m pip install --requirement services/api/requirements.txt
+python3 -m pip install --require-hashes --requirement services/api/requirements.lock
 PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'
 ```
 
-The API service must not be used with real identity data, production credentials, organizational asset data, or unapproved BEL data. The repository now includes a typed transaction-intent state machine with idempotency-conflict protection for local reference use. The next implementation phase must persist it in a durable database with unique constraints, expiry/retention, authenticated ownership, receipt/event confirmation, replacement/reorg handling, privacy-safe audit projection, rate limits, session invalidation, and route-level authorization before exposing business endpoints.
+The API service must not be used with real identity data, production credentials, organizational asset data, or unapproved BEL data. The repository now includes a typed transaction-intent state machine with idempotency-conflict protection for local reference use. The dependency surface intentionally excludes cryptographic verifier libraries until a genuine OIDC/JWKS or wallet verifier is implemented. The next implementation phase must persist the state machine in a durable database with unique constraints, expiry/retention, authenticated ownership, receipt/event confirmation, replacement/reorg handling, privacy-safe audit projection, rate limits, session invalidation, and route-level authorization before exposing business endpoints.

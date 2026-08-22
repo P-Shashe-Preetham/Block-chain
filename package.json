@@ -15,9 +15,11 @@
     "deploy:local": "hardhat run contracts/scripts/deploy.ts",
     "validate:references": "python3 scripts/validate_references.py",
     "validate:environment": "python3 scripts/validate_environment.py",
+    "validate:markdown": "python3 scripts/validate_markdown_tables.py",
     "lint": "hardhat build && tsc --noEmit",
     "test": "hardhat test",
     "test:api": "PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'",
+    "test:services": "PYTHONPATH=. python3 -m unittest discover -s services -p 'test_*.py'",
     "test:coverage": "hardhat test --coverage"
   },
   "devDependencies": {
