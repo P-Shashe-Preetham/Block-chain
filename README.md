@@ -68,52 +68,40 @@ cp .env.example .env
 
 Review `.env` before running anything. Use local-only test accounts and throwaway keys for development. Never commit `.env`, private keys, seed phrases, production RPC credentials, or real identity data.
 
-### Start local dependencies
+### Install and validate the current MVP
+
+The current implementation is the Solidity/Hardhat contract MVP and does not yet include a tracked Docker Compose file, FastAPI service, indexer, database, storage service, or frontend. Do not start undocumented services or install dependencies from missing paths.
 
 ```bash
-docker compose up -d postgres redis minio
-```
-
-If a Compose file has not yet been added to the implementation repository, start equivalent local services and configure their connection strings using `.env`. The documentation suite intentionally does not assume that containers are available in the first prototype commit.
-
-### Install workspace dependencies
-
-```bash
-pnpm install
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r services/api/requirements.txt
-```
-
-### Run contract tests
-
-```bash
+pnpm install --frozen-lockfile
+pnpm validate:environment -- --file .env.example --environment local
+pnpm validate:references
+pnpm lint
 pnpm test
+pnpm run test:coverage
 pnpm build
 ```
 
-Contract tests should cover unauthorized minting, unauthorized role changes, duplicate allocation, ownership transfer, event emission, paused or emergency states, and any upgradeability policy. Do not deploy an unreviewed contract to a public network.
+The contract test suite covers identity lifecycle, RBAC, asset allocation, controlled transfer paths, access decisions, pause behavior, and rejection paths. Contract tests must continue to cover unauthorized minting, unauthorized role changes, duplicate allocation, ownership transfer, event emission, paused or emergency states, and any upgradeability policy. Do not deploy an unreviewed contract to a public network.
 
-### Run the API and frontend
+### Future API, indexer, storage, and frontend
 
-```bash
-pnpm --filter web dev
-. .venv/bin/activate && uvicorn services.api.app:app --reload --port 8000
-```
-
-The expected local endpoints are `http://localhost:3000` for the web console and `http://localhost:8000` for the API. Exact commands may change as implementation packages are introduced; keep this README and the ADR synchronized with those changes.
+FastAPI, the event indexer, PostgreSQL/Redis projections, encrypted object storage, and the Next.js/mobile client are planned components, not implemented services in the current checkout. Their commands, dependencies, and endpoints must be added only in the pull request that introduces the corresponding component and tests.
 
 ### Run quality checks
 
+The current repository quality gate is:
+
 ```bash
+pnpm validate:environment -- --file .env.example --environment local
+pnpm validate:references
 pnpm lint
 pnpm test
+pnpm run test:coverage
 pnpm build
-python -m pytest services/api/tests
 ```
 
-For browser-level validation, run the Cypress suite after the web and API services are available. Accessibility checks should be part of the same review path, using automated checks as a baseline rather than a substitute for manual keyboard and screen-reader testing.[3]
+Future API, indexer, browser, storage, and accessibility checks must become mandatory CI checks when those components exist. Accessibility validation should combine automation with manual keyboard and screen-reader review.[3]
 
 ## Representative domain flows
 
@@ -166,9 +154,9 @@ A verifier reads contract state and events, confirms the token and organizationa
 │   ├── api/                  # FastAPI application
 │   └── indexer/              # Event ingestion and reconciliation
 ├── packages/
-│   ├── config/               # Shared configuration and validation
 │   ├── types/                # Shared domain types and schemas
 │   └── ui/                   # Reusable accessible UI components
+├── config/                   # Environment schema and validation policy
 ├── MAINTENANCE.md             # Maintenance cadence and release evidence
 ├── docs/
 │   ├── ADR/                      # Architecture Decision Records
@@ -176,6 +164,7 @@ A verifier reads contract state and events, confirms the token and organizationa
 │   ├── PROBLEM-STATEMENT-TRACEABILITY.md
 │   ├── THREAT-MODEL.md           # Threats, invariants, and abuse cases
 │   ├── ACCEPTANCE-CRITERIA.md    # MVP demonstration criteria
+│   ├── COMPREHENSIVE-IMPROVEMENT-AND-FIX-REGISTER.md
 │   └── runbooks/                 # Operational procedures
 ├── .github/                  # Issues, workflows, ownership, and automation
 ├── .devcontainer/            # Reproducible development environment

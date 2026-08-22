@@ -78,6 +78,10 @@ jobs:
         if: ${{ hashFiles('package.json') != '' }}
         run: pnpm validate:references
 
+      - name: Validate environment contract
+        if: ${{ hashFiles('package.json') != '' && hashFiles('config/environment.schema.json') != '' }}
+        run: pnpm validate:environment -- --file .env.example --environment local
+
       - name: Audit dependencies
         if: ${{ hashFiles('package.json') != '' }}
         run: pnpm audit --audit-level=moderate

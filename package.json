@@ -14,6 +14,7 @@
     "build": "hardhat build",
     "deploy:local": "hardhat run contracts/scripts/deploy.ts",
     "validate:references": "python3 scripts/validate_references.py",
+    "validate:environment": "python3 scripts/validate_environment.py",
     "lint": "hardhat build && tsc --noEmit",
     "test": "hardhat test",
     "test:coverage": "hardhat test --coverage"

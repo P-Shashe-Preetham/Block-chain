@@ -35,16 +35,16 @@ Use the repository's documented runtime versions and copy `.env.example` to `.en
 
 ```bash
 corepack enable
-pnpm install
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -r services/api/requirements.txt
-# Run the repository's configured hook installer when present.
+pnpm install --frozen-lockfile
+pnpm validate:environment -- --file .env.example --environment local
+pnpm validate:references
 pnpm lint
-python -m pytest services/api/tests
+pnpm test
+pnpm run test:coverage
+pnpm build
 ```
 
-If a command is not yet implemented, do not silently remove it from documentation. Update the relevant issue or documentation in the same pull request so a clean checkout remains reproducible.
+The current checkout implements the Solidity/Hardhat MVP only. FastAPI, indexer, database, storage, and frontend commands must be added to this list in the same pull request that introduces those components; a clean checkout must never invoke a missing path or silently ignore a failed setup step.
 
 ### 4. Implement the change
 
@@ -80,7 +80,8 @@ Before requesting final review, confirm the following:
 
 - The change has a linked issue or an approved RFC.
 - The title and commits follow the repository's Conventional Commits policy.
-- Tests cover expected behavior, rejection paths, and relevant authorization boundaries.
+- [ ] Tests cover expected behavior, rejection paths, and relevant authorization boundaries.
+- [ ] `pnpm validate:environment`, `pnpm validate:references`, `pnpm lint`, `pnpm test`, `pnpm run test:coverage`, and `pnpm build` pass for the current MVP; future-service checks are listed only after their components exist.
 - Contract changes include event, access-control, reentrancy, upgradeability, and gas-impact review as applicable.
 - API changes include validation, authentication/authorization, error handling, and migration considerations.
 - UI changes include keyboard navigation, visible focus, semantic labels, and an automated accessibility check where practical.
