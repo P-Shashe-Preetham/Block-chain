@@ -16,6 +16,10 @@ This directory contains the first **fail-closed API boundary** for the platform.
 
 The current `OidcJwksTokenVerifier` is an explicit integration boundary that refuses authentication until the selected organization's OIDC/JWKS provider is implemented. Do not replace it with an unsigned JWT decoder, a wallet address header, or a token payload decode without signature, issuer, audience, expiry, algorithm, and key-rotation validation.
 
+## Server entrypoint
+
+The production ASGI import is `services.api.asgi:app`; importing it validates environment settings. Tests should use `create_app(Settings(...))` with explicit fixture settings rather than mutating process-wide environment.
+
 ## Local checks
 
 From the repository root:

@@ -1,49 +1,63 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import unittest
 from unittest.mock import patch
 
-# Tests must never inherit a developer or runner's production-like environment.
-os.environ["APP_ENV"] = "local"
-os.environ.pop("CONTRACT_ADDRESS", None)
-os.environ["CORS_ALLOWED_ORIGINS"] = "http://localhost:3000"
+import httpx
 
-from starlette.testclient import TestClient
-
-from services.api.app import app
+from services.api.app import create_app
 from services.api.auth import extract_bearer_token
 from services.api.config import ConfigurationError, Settings
 
 
+app = create_app(
+    Settings(
+        app_env="local",
+        auth_issuer=None,
+        auth_audience=None,
+        auth_jwks_url=None,
+        chain_id=31337,
+        rpc_url="http://127.0.0.1:8545",
+        contract_address=None,
+        cors_allowed_origins=("http://localhost:3000",),
+    )
+)
+
+
+def request(method: str, path: str, headers: dict[str, str] | None = None) -> httpx.Response:
+    async def send() -> httpx.Response:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            return await client.request(method, path, headers=headers)
+
+    return asyncio.run(send())
+
+
 class ApiBoundaryTests(unittest.TestCase):
     def test_health_endpoint_is_public_and_does_not_leak_configuration(self) -> None:
-        with TestClient(app) as client:
-            response = client.get("/healthz")
+        response = request("GET", "/healthz")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok", "service": "api", "mode": "local"})
         self.assertNotIn("RPC_URL", response.text)
 
     def test_readiness_fails_closed_without_contract_configuration(self) -> None:
-        with TestClient(app) as client:
-            response = client.get("/readyz")
+        response = request("GET", "/readyz")
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()["status"], "not_ready")
 
     def test_audit_requires_bearer_authentication(self) -> None:
-        with TestClient(app) as client:
-            response = client.get("/v1/audit")
+        response = request("GET", "/v1/audit")
         self.assertEqual(response.status_code, 401)
 
     def test_bearer_auth_fails_closed_until_oidc_is_configured(self) -> None:
-        with TestClient(app) as client:
-            response = client.get("/v1/audit", headers={"Authorization": "Bearer opaque-test-token"})
+        response = request("GET", "/v1/audit", {"Authorization": "Bearer opaque-test-token"})
         self.assertEqual(response.status_code, 503)
 
     def test_request_id_is_returned_and_invalid_control_characters_are_rejected(self) -> None:
-        with TestClient(app) as client:
-            valid = client.get("/healthz", headers={"X-Request-ID": "test-request-001"})
-            invalid = client.get("/healthz", headers={"X-Request-ID": "bad\nrequest"})
+        valid = request("GET", "/healthz", {"X-Request-ID": "test-request-001"})
+        invalid = request("GET", "/healthz", {"X-Request-ID": "bad\nrequest"})
         self.assertEqual(valid.status_code, 200)
         self.assertEqual(valid.headers["X-Request-ID"], "test-request-001")
         self.assertEqual(invalid.status_code, 400)
