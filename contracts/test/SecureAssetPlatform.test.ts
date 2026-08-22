@@ -145,6 +145,29 @@ describe("SecureAssetPlatform", function () {
     expect(await platform.ownerOf(0)).to.equal(auditor.address);
     await expect(platform.connect(manager)["safeTransferFrom(address,address,uint256)"](auditor.address, user.address, 0)).not.to.revert(ethers);
     expect(await platform.ownerOf(0)).to.equal(user.address);
+    await expect(platform.connect(manager)["safeTransferFrom(address,address,uint256,bytes)"](user.address, auditor.address, 0, "0x1234")).not.to.revert(ethers);
+    expect(await platform.ownerOf(0)).to.equal(auditor.address);
+  });
+
+  it("blocks unauthorized receiver reentrancy during a safe transfer callback", async function () {
+    const { platform, manager, recipient, user } = await deployFixture();
+    const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-REENTRANCY-001"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-reentrancy-001"));
+    await platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash);
+
+    const receiverFactory = await ethers.getContractFactory("MaliciousERC721Receiver");
+    const receiver = await receiverFactory.deploy();
+    await receiver.waitForDeployment();
+    const receiverAddress = await receiver.getAddress();
+    await platform.registerIdentity(receiverAddress, ethers.keccak256(ethers.toUtf8Bytes("did:example:receiver")));
+    await receiver.configure(await platform.getAddress(), user.address, 0);
+
+    await expect(
+      platform.connect(manager)["safeTransferFrom(address,address,uint256,bytes)"](recipient.address, receiverAddress, 0, "0x"),
+    ).not.to.revert(ethers);
+    expect(await platform.ownerOf(0)).to.equal(receiverAddress);
+    expect(await receiver.reentryAttempted()).to.equal(true);
+    expect(await receiver.reentrySucceeded()).to.equal(false);
   });
 
   it("prevents uncontrolled expansion of the default administrator role and approvals", async function () {
