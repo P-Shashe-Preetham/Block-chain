@@ -25,4 +25,4 @@ python3 -m pip install --requirement services/api/requirements.txt
 PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'
 ```
 
-The API service must not be used with real identity data, production credentials, organizational asset data, or unapproved BEL data. The next implementation phase must add the transaction-intent state machine, idempotency, contract/RPC verification, privacy-safe audit projection, rate limits, session invalidation, and route-level authorization before exposing business endpoints.
+The API service must not be used with real identity data, production credentials, organizational asset data, or unapproved BEL data. The repository now includes a typed transaction-intent state machine with idempotency-conflict protection for local reference use. The next implementation phase must persist it in a durable database with unique constraints, expiry/retention, authenticated ownership, receipt/event confirmation, replacement/reorg handling, privacy-safe audit projection, rate limits, session invalidation, and route-level authorization before exposing business endpoints.
