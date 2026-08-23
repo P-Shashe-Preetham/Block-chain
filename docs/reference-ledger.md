@@ -9,6 +9,10 @@
 | Evidence | The gate that must be linked before deeper adoption or a maturity claim. |
 | Maintenance | Every adopted source requires an owner, update policy, license/provenance review, and sunset/revalidation condition. |
 
+## Phase 1 activation protocol
+
+The rows below are the source-of-truth inventory for all supplied references. `Pending owner-led review` is intentional and must not be replaced by an inferred upstream commit, contributor, license conclusion, security status, or runtime adoption claim. Before a row changes decision class, the maintainer must attach the exact consulted revision/date, an accountable role, an evidence link, a revalidation cadence, a sunset/removal condition, and any notice impact. The final-project governance and delivery records are [Final Project Execution Plan V2](FINAL-PROJECT-EXECUTION-PLAN-V2.md), [Project Engineering Defaults](PROJECT-ENGINEERING-DEFAULTS.md), [Final Project Governance Baseline](FINAL-PROJECT-GOVERNANCE-BASELINE.md), and [Final Release Gate](FINAL-RELEASE-GATE.md).
+
 | # | Source | URL | Category | Decision | Full-value use | Evidence/gate | Consulted revision/date |
 |---:|---|---|---|---|---|---|---|
 | 1 | [SpruceID SSI](https://github.com/spruceid/ssi) | https://github.com/spruceid/ssi | original-identity | `project-pattern` | credential parse/verify/sign adapter boundaries and sanitized interoperability fixtures | select standards/runtime; license, privacy, and interoperability review | Pending owner-led review |
@@ -122,4 +126,5 @@
 - Existing original-reference decisions: `docs/REFERENCE-INTEGRATION.md`.
 - Attribution and license boundaries: `THIRD-PARTY-NOTICES.md`.
 - Final-project implementation plan: `/home/ubuntu/final-project-completion-plan.md` during planning and the repository copy after adoption.
+- Final-project execution and no-push delivery procedure: `docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md`.
 - Remediation status: `docs/COMPREHENSIVE-IMPROVEMENT-AND-FIX-REGISTER.md`.
