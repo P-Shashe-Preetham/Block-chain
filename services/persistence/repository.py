@@ -172,6 +172,30 @@ def mark_events_uncertain_from(
     return result.rowcount or 0
 
 
+def finalize_events_through(
+    session: Session,
+    *,
+    chain_id: int,
+    contract_address: str,
+    finalized_through: int,
+) -> int:
+    """Promote only previously unfinalized events at or below a finality boundary."""
+    _validate_block_quantity(chain_id, finalized_through)
+    _require_text(contract_address, "contract_address", 42)
+    result = session.execute(
+        update(CanonicalEventRecord)
+        .where(
+            CanonicalEventRecord.chain_id == chain_id,
+            CanonicalEventRecord.contract_address == contract_address.lower(),
+            CanonicalEventRecord.block_number <= finalized_through,
+            CanonicalEventRecord.projection_status == "unfinalized",
+        )
+        .values(projection_status="canonical")
+    )
+    session.flush()
+    return result.rowcount or 0
+
+
 def remove_checkpoints_from(
     session: Session,
     *,
