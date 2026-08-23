@@ -136,6 +136,7 @@ jobs:
         run: |
           pnpm check:web
           pnpm test:web
+          pnpm --filter @blockchain-secure-platform/web-console exec playwright install --with-deps chromium
           pnpm test:web:e2e
 
       - name: Test Python services

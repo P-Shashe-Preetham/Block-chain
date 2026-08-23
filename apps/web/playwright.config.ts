@@ -1,5 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+  ?? (process.env.CI ? undefined : "/usr/bin/chromium");
+
 export default defineConfig({
   testDir: "./tests",
   timeout: 30_000,
@@ -21,7 +24,7 @@ export default defineConfig({
     use: {
       browserName: "chromium",
       launchOptions: {
-        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
+        ...(executablePath ? { executablePath } : {}),
         args: ["--no-sandbox"],
       },
     },
