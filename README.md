@@ -78,6 +78,9 @@ pnpm test
 pnpm run test:coverage
 pnpm build
 pnpm test:services
+pnpm check:web
+pnpm test:web
+pnpm build:web
 ```
 
 A disposable local deployment can be generated with `pnpm deploy:local`. The script permits only the local/CI chain policy, verifies chain ID and deployed bytecode, and writes a manifest. Validate the generated evidence with `pnpm validate:deployment-manifest -- --file deployments/local.json`. Non-local environments remain blocked until an approved network and custody policy is recorded.
@@ -101,6 +104,9 @@ pnpm test
 pnpm run test:coverage
 pnpm build
 pnpm test:services
+pnpm check:web
+pnpm test:web
+pnpm build:web
 ```
 
 Future transaction API, indexer, browser, storage, and accessibility checks must become mandatory CI checks when those components exist. Accessibility validation should combine automation with manual keyboard and screen-reader review.[3]
@@ -129,7 +135,7 @@ A verifier reads contract state and events, confirms the token and organizationa
 
 ## Default technology stack versus alternatives
 
-| Capability | MVP default | Viable alternative | Decision criterion |
+| Capability | Final-project selected direction | Viable alternative | Decision criterion |
 |---|---|---|---|
 | Contract language | Solidity | Vyper | Use Solidity for ecosystem maturity and OpenZeppelin compatibility; reassess for specialized assurance needs |
 | Contract framework | Hardhat | Foundry | Use Hardhat for TypeScript integration; use Foundry when Solidity-native testing and fuzzing become primary |
@@ -190,7 +196,7 @@ This prototype is maintained through reviewed pull requests, scheduled dependenc
 
 ## Project status
 
-The project is in an **active final-project execution phase**: the Solidity/Hardhat contract baseline, fail-closed API, PostgreSQL-oriented persistence, indexer, storage reference boundaries, governance baseline, decision register, data dictionary, diagrams, and role/failure acceptance scenarios are implemented. The Evidence Ledger is a separate non-repository UI prototype and is **not** yet an integrated product component. An approved identity provider, network/custody decision, persistent worker deployment, KMS/HSM custody, production storage adapter, repository-integrated client, independent verifier release evidence, and independent assurance remain gated work. This label does not claim production readiness, controlled-testnet approval, independent audit, legal approval, or BEL endorsement. The maintained roadmap is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md), with the current execution, source-adoption, governance, decision, data, migration, and no-push procedures in [`docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md`](docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md), [`docs/PROJECT-ENGINEERING-DEFAULTS.md`](docs/PROJECT-ENGINEERING-DEFAULTS.md), [`docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md`](docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md), [`docs/FINAL-PROJECT-DECISION-REGISTER.md`](docs/FINAL-PROJECT-DECISION-REGISTER.md), [`docs/FINAL-PROJECT-DATA-DICTIONARY.md`](docs/FINAL-PROJECT-DATA-DICTIONARY.md), [`docs/FINAL-PROJECT-MIGRATION-NOTES-TEMPLATE.md`](docs/FINAL-PROJECT-MIGRATION-NOTES-TEMPLATE.md), [`docs/FINAL-RELEASE-GATE.md`](docs/FINAL-RELEASE-GATE.md), and [`docs/ADR/0009-react-vite-web-console-boundary.md`](docs/ADR/0009-react-vite-web-console-boundary.md).
+The project is in an **active final-project execution phase**: the Solidity/Hardhat contract baseline, fail-closed API, PostgreSQL-oriented persistence, indexer, storage reference boundaries, governance baseline, decision register, data dictionary, diagrams, role/failure acceptance scenarios, and a repository-native read-only Evidence Ledger console are implemented. The console is not an approved live identity, signer, deployment, storage, or independent-verification product component. An approved identity provider, network/custody decision, persistent worker deployment, KMS/HSM custody, production storage adapter, live authenticated API configuration, independent verifier release evidence, and independent assurance remain gated work. This label does not claim production readiness, controlled-testnet approval, independent audit, legal approval, or BEL endorsement. The maintained roadmap is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md), with the current execution, source-adoption, governance, decision, data, migration, and no-push procedures in [`docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md`](docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md), [`docs/PROJECT-ENGINEERING-DEFAULTS.md`](docs/PROJECT-ENGINEERING-DEFAULTS.md), [`docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md`](docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md), [`docs/FINAL-PROJECT-DECISION-REGISTER.md`](docs/FINAL-PROJECT-DECISION-REGISTER.md), [`docs/FINAL-PROJECT-DATA-DICTIONARY.md`](docs/FINAL-PROJECT-DATA-DICTIONARY.md), [`docs/FINAL-PROJECT-MIGRATION-NOTES-TEMPLATE.md`](docs/FINAL-PROJECT-MIGRATION-NOTES-TEMPLATE.md), [`docs/FINAL-RELEASE-GATE.md`](docs/FINAL-RELEASE-GATE.md), and [`docs/ADR/0009-react-vite-web-console-boundary.md`](docs/ADR/0009-react-vite-web-console-boundary.md).
 
 ## Contributing and support
 

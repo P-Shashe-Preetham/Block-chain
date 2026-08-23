@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.21.0",
-  "description": "MVP smart-contract baseline for decentralized identity, RBAC, and NFT-backed digital assets",
+  "description": "Final-project engineering foundation for decentralized identity references, RBAC, and NFT-backed digital assets",
   "license": "MIT",
   "engines": {
     "node": ">=22 <23",
@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "hardhat build",
+    "build:web": "pnpm --filter @blockchain-secure-platform/web-console build",
     "deploy:local": "hardhat run contracts/scripts/deploy.ts",
     "validate:references": "python3 scripts/validate_references.py",
     "validate:environment": "python3 scripts/validate_environment.py",
@@ -21,10 +22,12 @@
     "validate:indexer-abi": "node scripts/validate_indexer_abi.mjs",
     "test:config": "PYTHONPATH=. python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
     "lint": "hardhat build && tsc --noEmit",
+    "check:web": "pnpm --filter @blockchain-secure-platform/web-console check",
     "test": "hardhat test",
     "test:api": "PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'",
     "test:services": "PYTHONPATH=. python3 -m unittest discover -s services -p 'test_*.py'",
-    "test:coverage": "hardhat test --coverage"
+    "test:coverage": "hardhat test --coverage",
+    "test:web": "pnpm --filter @blockchain-secure-platform/web-console test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "4.0.15",

@@ -123,6 +123,12 @@ jobs:
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm test
 
+      - name: Check and test web console
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
+        run: |
+          pnpm check:web
+          pnpm test:web
+
       - name: Test Python services
         if: ${{ hashFiles('services/**/*.py') != '' || hashFiles('tests/**/*.py') != '' }}
         run: pnpm test:services
@@ -130,6 +136,10 @@ jobs:
       - name: Build application
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm build
+
+      - name: Build web console
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
+        run: pnpm build:web
 
       - name: Validate canonical indexer ABI
         if: ${{ hashFiles('package.json') != '' && hashFiles('services/indexer/abi.py') != '' }}
