@@ -246,6 +246,52 @@ describe("SecureAssetPlatform", function () {
     expect(pauseReceipt!.gasUsed).to.be.lessThan(BigInt(GAS_BUDGETS.pause));
   });
 
+  it("covers invalid identity, asset, rule, and lifecycle inputs", async function () {
+    const { platform, admin, manager, user, recipient, outsider, replacement } = await deployFixture();
+    const didHash = ethers.keccak256(ethers.toUtf8Bytes("did:example:negative"));
+    const assetId = ethers.keccak256(ethers.toUtf8Bytes("BEL-LAB-NEGATIVE-001"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("asset-negative-001"));
+    const action = ethers.keccak256(ethers.toUtf8Bytes("READ_ASSET"));
+
+    await expect(platform.connect(admin).registerIdentity(ethers.ZeroAddress, didHash)).to.revert(ethers);
+    await expect(platform.connect(admin).registerIdentity(outsider.address, ethers.ZeroHash)).to.revert(ethers);
+    await expect(platform.connect(admin).setIdentityStatus(outsider.address, false)).to.revert(ethers);
+    await expect(platform.connect(admin).setIdentityStatus(admin.address, false)).to.revert(ethers);
+    await expect(platform.connect(admin).grantRole(MANAGER_ROLE, outsider.address)).to.revert(ethers);
+    await expect(platform.connect(admin).replaceIdentityKey(ethers.ZeroAddress, replacement.address, didHash)).to.revert(ethers);
+    await expect(platform.connect(admin).replaceIdentityKey(outsider.address, replacement.address, didHash)).to.revert(ethers);
+    await expect(platform.connect(admin).replaceIdentityKey(user.address, user.address, didHash)).to.revert(ethers);
+    await expect(platform.connect(admin).replaceIdentityKey(user.address, replacement.address, ethers.ZeroHash)).to.revert(ethers);
+    await expect(platform.connect(admin).replaceIdentityKey(admin.address, replacement.address, didHash)).to.revert(ethers);
+
+    await expect(platform.connect(manager).mintAndAllocateAsset(outsider.address, assetId, metadataHash)).to.revert(ethers);
+    await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, ethers.ZeroHash, metadataHash)).to.revert(ethers);
+    await expect(platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, ethers.ZeroHash)).to.revert(ethers);
+    await expect(platform.connect(manager).setAssetStatus(99, 1)).to.revert(ethers);
+    await platform.connect(manager).mintAndAllocateAsset(recipient.address, assetId, metadataHash);
+    await expect(platform.connect(manager).setAssetStatus(0, 99)).to.revert(ethers);
+    await expect(platform.connect(manager).setAccessRule(0, ethers.ZeroAddress, action, true, 0)).to.revert(ethers);
+    await expect(platform.connect(manager).setAccessRule(0, user.address, ethers.ZeroHash, true, 0)).to.revert(ethers);
+    await expect(platform.connect(manager).setAccessRule(0, outsider.address, action, true, 0)).to.revert(ethers);
+    const latestBlock = await ethers.provider.getBlock("latest");
+    await expect(platform.connect(manager).setAccessRule(0, user.address, action, true, BigInt(latestBlock!.timestamp - 1))).to.revert(ethers);
+    await expect(platform.connect(manager).requestAccess(99, action)).to.emit(platform, "AccessDecision").withArgs(manager.address, 99, action, false);
+    await expect(platform.connect(manager).transferFrom(recipient.address, user.address, 99)).to.revert(ethers);
+
+    await platform.connect(admin).setIdentityStatus(user.address, false);
+    await platform.connect(admin).setIdentityStatus(user.address, true);
+    expect((await platform.identityRegistry(user.address)).isActive).to.equal(true);
+    await platform.connect(admin).setIdentityStatus(recipient.address, false);
+    await expect(platform.connect(manager).transferAsset(recipient.address, user.address, 0)).to.revert(ethers);
+  });
+
+  it("emits pause and unpause state transitions", async function () {
+    const { platform, admin } = await deployFixture();
+    await expect(platform.connect(admin).pause()).to.emit(platform, "EmergencyStateChanged").withArgs(true);
+    await expect(platform.connect(admin).unpause()).to.emit(platform, "EmergencyStateChanged").withArgs(false);
+    expect(await platform.paused()).to.equal(false);
+  });
+
   it("blocks state changes while paused", async function () {
     const { platform, admin, manager, recipient } = await deployFixture();
     await platform.connect(admin).pause();
