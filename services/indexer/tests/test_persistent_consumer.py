@@ -1,9 +1,10 @@
 import unittest
 
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from services.indexer.consumer import JsonRpcClient, PersistentConfirmedScanner
+from services.indexer.runner import PersistentConfirmedScanOnce
 from services.persistence.models import Base, CanonicalEventRecord, RawChainLogRecord
 
 
@@ -64,6 +65,50 @@ class PersistentConsumerTests(unittest.TestCase):
             raw = session.scalar(select(RawChainLogRecord))
             self.assertEqual(raw.data_hex, word("0x1"))
             self.assertEqual(raw.topics_json, "[\"" + DECISION_TOPIC + "\",\"" + word(SUBJECT) + "\",\"" + word("0x9") + "\",\"" + ACTION + "\"]")
+
+    def test_atomic_one_shot_runner_commits_after_confirmed_scan(self) -> None:
+        engine = create_engine("sqlite+pysqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        transport = FakeTransport()
+        client = JsonRpcClient(["http://rpc.test"], transport=transport, sleep=lambda _: None)
+        runner = PersistentConfirmedScanOnce(
+            client,
+            chain_id=31337,
+            contract_address=CONTRACT,
+            confirmations=1,
+            session_factory=sessionmaker(engine, expire_on_commit=False),
+        )
+        result = runner.run(10)
+        self.assertEqual(result.projected_events, 1)
+        with Session(engine) as session:
+            self.assertEqual(session.query(CanonicalEventRecord).count(), 1)
+            self.assertEqual(session.query(RawChainLogRecord).count(), 1)
+
+    def test_atomic_one_shot_runner_rolls_back_unknown_event(self) -> None:
+        engine = create_engine("sqlite+pysqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        transport = FakeTransport()
+        original = transport.__call__
+
+        def unknown(endpoint, request, timeout):
+            response = original(endpoint, request, timeout)
+            if request["method"] == "eth_getLogs":
+                response["result"][0]["topics"][0] = "0x" + "00" * 32
+            return response
+
+        client = JsonRpcClient(["http://rpc.test"], transport=unknown, sleep=lambda _: None)
+        runner = PersistentConfirmedScanOnce(
+            client,
+            chain_id=31337,
+            contract_address=CONTRACT,
+            confirmations=1,
+            session_factory=sessionmaker(engine, expire_on_commit=False),
+        )
+        with self.assertRaises(ValueError):
+            runner.run(10)
+        with Session(engine) as session:
+            self.assertEqual(session.query(CanonicalEventRecord).count(), 0)
+            self.assertEqual(session.query(RawChainLogRecord).count(), 0)
 
     def test_unknown_event_is_rejected_before_persistence(self) -> None:
         engine = create_engine("sqlite+pysqlite:///:memory:")
