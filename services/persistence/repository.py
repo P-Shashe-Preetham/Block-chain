@@ -11,12 +11,12 @@ import json
 from collections.abc import Mapping
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from services.api.transactions import TransactionConflict
 from services.indexer.projector import CanonicalEvent, EventKey
-from .models import CanonicalEventRecord, TransactionIntent
+from .models import BlockCheckpoint, CanonicalEventRecord, TransactionIntent
 
 
 class PersistenceConflict(ValueError):
@@ -79,7 +79,8 @@ def insert_canonical_event(
     if not isinstance(event, CanonicalEvent):
         raise ValueError("event must be a CanonicalEvent")
     _validate_event_key(event.key)
-    _require_text(projection_status, "projection_status", 32)
+    if projection_status not in {"canonical", "unfinalized", "uncertain"}:
+        raise ValueError("projection_status is invalid")
     event_id = _event_id(event.key)
     existing = session.scalar(select(CanonicalEventRecord).where(CanonicalEventRecord.id == event_id))
     payload_json = json.dumps(dict(event.payload), sort_keys=True, separators=(",", ":"))
@@ -109,6 +110,106 @@ def insert_canonical_event(
     session.add(record)
     session.flush()
     return record
+
+
+def record_block_checkpoint(
+    session: Session,
+    *,
+    chain_id: int,
+    block_number: int,
+    block_hash: str,
+    finalized: bool,
+    observed_at: datetime | None = None,
+) -> BlockCheckpoint:
+    """Persist one checkpoint idempotently and reject block-hash conflicts."""
+    _validate_block_identity(chain_id, block_number, block_hash)
+    existing = session.scalar(
+        select(BlockCheckpoint).where(
+            BlockCheckpoint.chain_id == chain_id,
+            BlockCheckpoint.block_number == block_number,
+        )
+    )
+    if existing:
+        if existing.block_hash != block_hash:
+            raise PersistenceConflict("block number was observed with a different hash")
+        if finalized and not existing.finalized:
+            existing.finalized = True
+            session.flush()
+        return existing
+    checkpoint = BlockCheckpoint(
+        chain_id=chain_id,
+        block_number=block_number,
+        block_hash=block_hash,
+        finalized=finalized,
+        observed_at=observed_at or datetime.now(timezone.utc),
+    )
+    session.add(checkpoint)
+    session.flush()
+    return checkpoint
+
+
+def mark_events_uncertain_from(
+    session: Session,
+    *,
+    chain_id: int,
+    contract_address: str,
+    block_number: int,
+) -> int:
+    """Withhold affected records after a detected reorg without deleting history."""
+    _validate_block_quantity(chain_id, block_number)
+    _require_text(contract_address, "contract_address", 42)
+    result = session.execute(
+        update(CanonicalEventRecord)
+        .where(
+            CanonicalEventRecord.chain_id == chain_id,
+            CanonicalEventRecord.contract_address == contract_address.lower(),
+            CanonicalEventRecord.block_number >= block_number,
+            CanonicalEventRecord.projection_status.in_(("canonical", "unfinalized")),
+        )
+        .values(projection_status="uncertain")
+    )
+    session.flush()
+    return result.rowcount or 0
+
+
+def remove_checkpoints_from(
+    session: Session,
+    *,
+    chain_id: int,
+    block_number: int,
+) -> int:
+    """Remove only derived checkpoints at or after a reorg boundary."""
+    _validate_block_quantity(chain_id, block_number)
+    result = session.query(BlockCheckpoint).filter(
+        BlockCheckpoint.chain_id == chain_id,
+        BlockCheckpoint.block_number >= block_number,
+    ).delete(synchronize_session=False)
+    session.flush()
+    return result
+
+
+def restore_replayed_event(
+    session: Session,
+    event: CanonicalEvent,
+    *,
+    observed_at: datetime | None = None,
+) -> CanonicalEventRecord:
+    """Validate a replay against the original identity, then make it canonical."""
+    record = insert_canonical_event(session, event, projection_status="canonical", observed_at=observed_at)
+    if record.projection_status == "uncertain":
+        record.projection_status = "canonical"
+        session.flush()
+    return record
+
+
+def _validate_block_quantity(chain_id: int, block_number: int) -> None:
+    if chain_id < 1 or block_number < 0:
+        raise ValueError("chain ID and block number are invalid")
+
+
+def _validate_block_identity(chain_id: int, block_number: int, block_hash: str) -> None:
+    _validate_block_quantity(chain_id, block_number)
+    _require_text(block_hash, "block_hash", 66)
 
 
 def _event_id(key: EventKey) -> str:

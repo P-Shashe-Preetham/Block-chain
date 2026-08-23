@@ -3,13 +3,21 @@ from __future__ import annotations
 import unittest
 from datetime import datetime, timezone
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from services.api.transactions import TransactionConflict
 from services.indexer.projector import CanonicalEvent, EventKey
-from services.persistence.models import Base
-from services.persistence.repository import PersistenceConflict, create_or_get_transaction_intent, insert_canonical_event
+from services.persistence.models import Base, BlockCheckpoint, CanonicalEventRecord
+from services.persistence.repository import (
+    PersistenceConflict,
+    create_or_get_transaction_intent,
+    insert_canonical_event,
+    mark_events_uncertain_from,
+    remove_checkpoints_from,
+    record_block_checkpoint,
+    restore_replayed_event,
+)
 
 
 NOW = datetime.now(timezone.utc)
@@ -60,6 +68,40 @@ class PersistenceRepositoryTests(unittest.TestCase):
             self.assertIs(first, retry)
             with self.assertRaises(PersistenceConflict):
                 insert_canonical_event(session, canonical_event(payload=(("assetId", "2"),)), observed_at=NOW)
+
+    def test_event_projection_status_is_closed(self) -> None:
+        with Session(self.engine) as session:
+            with self.assertRaises(ValueError):
+                insert_canonical_event(session, canonical_event(), projection_status="authoritative", observed_at=NOW)
+
+    def test_checkpoint_retry_promotes_finality_and_rejects_hash_conflict(self) -> None:
+        with Session(self.engine) as session:
+            first = record_block_checkpoint(session, chain_id=31337, block_number=1, block_hash="0x" + "3" * 64, finalized=False, observed_at=NOW)
+            record_block_checkpoint(session, chain_id=31337, block_number=2, block_hash="0x" + "5" * 64, finalized=True, observed_at=NOW)
+            retry = record_block_checkpoint(session, chain_id=31337, block_number=1, block_hash="0x" + "3" * 64, finalized=True, observed_at=NOW)
+            self.assertIs(first, retry)
+            self.assertTrue(retry.finalized)
+            self.assertEqual(session.scalar(select(BlockCheckpoint).where(BlockCheckpoint.block_number == 1)).block_hash, "0x" + "3" * 64)
+            with self.assertRaises(PersistenceConflict):
+                record_block_checkpoint(session, chain_id=31337, block_number=1, block_hash="0x" + "4" * 64, finalized=True, observed_at=NOW)
+            self.assertEqual(remove_checkpoints_from(session, chain_id=31337, block_number=2), 1)
+            self.assertIsNotNone(session.get(BlockCheckpoint, (31337, 1)))
+            self.assertIsNone(session.get(BlockCheckpoint, (31337, 2)))
+
+    def test_reorg_marks_only_affected_contract_events_uncertain_and_replay_restores(self) -> None:
+        original = canonical_event()
+        other_contract = CanonicalEvent(EventKey(31337, "0x" + "9" * 40, "0x" + "8" * 64, 0), 4, "0x" + "7" * 64, "Other", ())
+        with Session(self.engine) as session:
+            insert_canonical_event(session, original, observed_at=NOW)
+            insert_canonical_event(session, other_contract, observed_at=NOW)
+            self.assertEqual(mark_events_uncertain_from(session, chain_id=31337, contract_address="0x" + "1" * 40, block_number=1), 1)
+            affected = session.get(CanonicalEventRecord, "31337:0x" + "1" * 40 + ":0x" + "2" * 64 + ":0:1")
+            untouched = session.get(CanonicalEventRecord, "31337:0x" + "9" * 40 + ":0x" + "8" * 64 + ":0:1")
+            self.assertEqual(affected.projection_status, "uncertain")
+            self.assertEqual(untouched.projection_status, "canonical")
+            restored = restore_replayed_event(session, original, observed_at=NOW)
+            self.assertIs(restored, affected)
+            self.assertEqual(restored.projection_status, "canonical")
 
 
 if __name__ == "__main__":
