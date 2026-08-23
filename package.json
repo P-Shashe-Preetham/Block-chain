@@ -27,7 +27,8 @@
     "test:api": "PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'",
     "test:services": "PYTHONPATH=. python3 -m unittest discover -s services -p 'test_*.py'",
     "test:coverage": "hardhat test --coverage",
-    "test:web": "pnpm --filter @blockchain-secure-platform/web-console test"
+    "test:web": "pnpm --filter @blockchain-secure-platform/web-console test",
+    "test:verifier": "node --test scripts/tests/test_verifier.mjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "4.0.15",

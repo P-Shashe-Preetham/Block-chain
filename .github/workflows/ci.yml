@@ -127,6 +127,10 @@ jobs:
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm test
 
+      - name: Test independent asset verifier
+        if: ${{ hashFiles('scripts/tests/test_verifier.mjs') != '' }}
+        run: pnpm test:verifier
+
       - name: Check and test web console
         if: ${{ hashFiles('apps/web/package.json') != '' }}
         run: |
