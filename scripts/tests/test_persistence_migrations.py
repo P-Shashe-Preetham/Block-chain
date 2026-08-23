@@ -17,17 +17,17 @@ class PersistenceMigrationTests(unittest.TestCase):
     def test_initial_revision_upgrades_a_disposable_database(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             database_path = Path(directory) / "migration.sqlite3"
-            previous = os.environ.get("PERSISTENCE_DATABASE_URL")
-            os.environ["PERSISTENCE_DATABASE_URL"] = f"sqlite:///{database_path}"
+            previous = os.environ.get("DATABASE_URL")
+            os.environ["DATABASE_URL"] = f"sqlite:///{database_path}"
             try:
                 config = Config(str(ROOT / "services/persistence/alembic.ini"))
                 config.set_main_option("script_location", str(ROOT / "services/persistence/alembic"))
                 command.upgrade(config, "head")
             finally:
                 if previous is None:
-                    os.environ.pop("PERSISTENCE_DATABASE_URL", None)
+                    os.environ.pop("DATABASE_URL", None)
                 else:
-                    os.environ["PERSISTENCE_DATABASE_URL"] = previous
+                    os.environ["DATABASE_URL"] = previous
 
             engine = create_engine(f"sqlite:///{database_path}")
             tables = set(inspect(engine).get_table_names())

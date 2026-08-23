@@ -17,9 +17,9 @@ target_metadata = Base.metadata
 
 
 def database_url() -> str:
-    value = os.environ.get("PERSISTENCE_DATABASE_URL")
+    value = os.environ.get("DATABASE_URL") or os.environ.get("PERSISTENCE_DATABASE_URL")
     if not value:
-        raise RuntimeError("PERSISTENCE_DATABASE_URL must be set for migrations")
+        raise RuntimeError("DATABASE_URL must be set for migrations")
     return value
 
 
