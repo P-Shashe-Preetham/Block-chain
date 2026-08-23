@@ -7,6 +7,7 @@ state; it only persists validated workflow/projection records.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Mapping
 from datetime import datetime, timezone
@@ -17,7 +18,8 @@ from sqlalchemy.orm import Session
 from services.api.transactions import TransactionConflict
 from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
-from .models import BlockCheckpoint, CanonicalEventRecord, RawChainLogRecord, TransactionIntent
+from services.indexer.reconcile import Drift
+from .models import BlockCheckpoint, CanonicalEventRecord, RawChainLogRecord, ReconciliationFinding, TransactionIntent
 
 
 class PersistenceConflict(ValueError):
@@ -67,6 +69,52 @@ def create_or_get_transaction_intent(
     session.add(intent)
     session.flush()
     return intent
+
+
+def insert_reconciliation_finding(
+    session: Session,
+    finding: Drift,
+    *,
+    observed_at: datetime | None = None,
+) -> ReconciliationFinding:
+    """Persist deterministic drift evidence without changing canonical or projected facts."""
+    if not isinstance(finding, Drift):
+        raise ValueError("finding must be a Drift")
+    _require_text(finding.key, "subject_key", 256)
+    canonical_value = finding.canonical_value
+    projected_value = finding.projected_value
+    for value, name in ((canonical_value, "canonical_value"), (projected_value, "projected_value")):
+        if value is not None:
+            _require_text(value, name, 65535)
+    finding_id = hashlib.sha256(
+        json.dumps(
+            [finding.key, finding.kind, canonical_value, projected_value],
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    existing = session.get(ReconciliationFinding, finding_id)
+    if existing:
+        if any((
+            existing.subject_key != finding.key,
+            existing.finding_kind != finding.kind,
+            existing.canonical_value != canonical_value,
+            existing.projected_value != projected_value,
+        )):
+            raise PersistenceConflict("reconciliation finding identity was reused for different content")
+        return existing
+    record = ReconciliationFinding(
+        id=finding_id,
+        subject_key=finding.key,
+        finding_kind=finding.kind,
+        canonical_value=canonical_value,
+        projected_value=projected_value,
+        status="open",
+        created_at=observed_at or datetime.now(timezone.utc),
+        resolved_at=None,
+    )
+    session.add(record)
+    session.flush()
+    return record
 
 
 def insert_raw_chain_log(

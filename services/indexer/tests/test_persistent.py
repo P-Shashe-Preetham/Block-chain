@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from services.indexer.consumer import RawChainLog
 from services.indexer.persistent import PersistentProjection
 from services.indexer.projector import CanonicalEvent, EventKey
-from services.persistence.models import Base, CanonicalEventRecord
+from services.persistence.models import Base, CanonicalEventRecord, ReconciliationFinding
 from services.persistence.repository import PersistenceConflict
 
 
@@ -53,6 +53,18 @@ class PersistentProjectionTests(unittest.TestCase):
             self.assertEqual(record.projection_status, "uncertain")
             restored = projection.restore_replayed(original)
             self.assertEqual(restored.projection_status, "canonical")
+
+    def test_reconciliation_persists_drift_without_repair(self):
+        canonical = {"owner:7": "0x1", "status:7": "active"}
+        projected = {"owner:7": "0x2", "extra:7": "stale"}
+        with Session(self.engine) as session:
+            projection = PersistentProjection(session, chain_id=CHAIN_ID, contract_address=CONTRACT, confirmations=1)
+            findings = projection.record_reconciliation(canonical, projected)
+            self.assertEqual(tuple(item.kind for item in findings), ("unexpected_projection", "value_mismatch", "missing_projection"))
+            self.assertEqual(canonical, {"owner:7": "0x1", "status:7": "active"})
+            self.assertEqual(projected, {"owner:7": "0x2", "extra:7": "stale"})
+            self.assertEqual(len(session.query(ReconciliationFinding).all()), 3)
+            self.assertTrue(all(item.status == "open" for item in session.query(ReconciliationFinding).all()))
 
     def test_scope_is_closed_to_other_chain_or_contract(self):
         with Session(self.engine) as session:

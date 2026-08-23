@@ -7,12 +7,15 @@ must supply an explicit SQLAlchemy transaction and an already decoded event.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from sqlalchemy.orm import Session
 
 from services.persistence.repository import (
     PersistenceConflict,
     insert_canonical_event,
     insert_raw_chain_log,
+    insert_reconciliation_finding,
     mark_events_uncertain_from,
     record_block_checkpoint,
     remove_checkpoints_from,
@@ -22,6 +25,7 @@ from services.persistence.repository import (
 
 from .consumer import RawChainLog
 from .projector import CanonicalEvent
+from .reconcile import Drift, find_drift
 
 
 class PersistentProjection:
@@ -76,6 +80,17 @@ class PersistentProjection:
         )
         remove_checkpoints_from(self._session, chain_id=self._chain_id, block_number=block_number)
         return affected
+
+    def record_reconciliation(
+        self,
+        canonical: Mapping[str, str],
+        projected: Mapping[str, str],
+    ) -> tuple[Drift, ...]:
+        """Persist deterministic drift evidence; never repair or resolve records."""
+        findings = find_drift(canonical, projected)
+        for finding in findings:
+            insert_reconciliation_finding(self._session, finding)
+        return findings
 
     def restore_replayed(self, event: CanonicalEvent):
         if event.key.chain_id != self._chain_id or event.key.contract_address.lower() != self._contract_address:

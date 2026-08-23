@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 from services.api.transactions import TransactionConflict
 from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
+from services.indexer.reconcile import find_drift
 from services.persistence.models import Base, BlockCheckpoint, CanonicalEventRecord
 from services.persistence.repository import (
     PersistenceConflict,
     create_or_get_transaction_intent,
     insert_canonical_event,
     insert_raw_chain_log,
+    insert_reconciliation_finding,
     mark_events_uncertain_from,
     remove_checkpoints_from,
     record_block_checkpoint,
@@ -70,6 +72,17 @@ class PersistenceRepositoryTests(unittest.TestCase):
             self.assertIs(first, retry)
             with self.assertRaises(PersistenceConflict):
                 insert_canonical_event(session, canonical_event(payload=(("assetId", "2"),)), observed_at=NOW)
+
+    def test_reconciliation_finding_retry_is_deterministic_and_content_is_checked(self) -> None:
+        finding = find_drift({"owner:7": "0x1"}, {"owner:7": "0x2"})[0]
+        with Session(self.engine) as session:
+            first = insert_reconciliation_finding(session, finding, observed_at=NOW)
+            retry = insert_reconciliation_finding(session, finding, observed_at=NOW)
+            self.assertIs(first, retry)
+            self.assertEqual(len(first.id), 64)
+            first.canonical_value = "tampered"
+            with self.assertRaises(PersistenceConflict):
+                insert_reconciliation_finding(session, finding, observed_at=NOW)
 
     def test_raw_log_retry_returns_existing_and_conflict_fails(self) -> None:
         event = canonical_event()
