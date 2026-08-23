@@ -17,6 +17,7 @@
     "validate:environment": "python3 scripts/validate_environment.py",
     "validate:markdown": "python3 scripts/validate_markdown_tables.py",
     "validate:deployment-policy": "python3 scripts/validate_deployment_policy.py",
+    "validate:deployment-manifest": "python3 scripts/validate_deployment_manifest.py",
     "lint": "hardhat build && tsc --noEmit",
     "test": "hardhat test",
     "test:api": "PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'",

@@ -75,7 +75,7 @@ async function main() {
   const manifest = {
     schemaVersion: 1,
     environment: appEnv,
-    networkName: network.name,
+    networkName: network.name || process.env.HARDHAT_NETWORK || "hardhat-local",
     chainId,
     rpcIdentity,
     contractName: "SecureAssetPlatform",

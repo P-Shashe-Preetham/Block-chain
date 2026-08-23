@@ -19,6 +19,7 @@
     "optimizer",
     "evmVersion",
     "deployer",
+    "deployerCustody",
     "deployedAt"
   ],
   "properties": {

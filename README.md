@@ -75,6 +75,7 @@ The current implementation is the Solidity/Hardhat contract MVP, a fail-closed F
 ```bash
 pnpm install --frozen-lockfile
 python3 -m pip install --require-hashes --requirement services/api/requirements.lock
+python3 -m pip install --require-hashes --requirement services/storage/requirements.lock
 pnpm validate:environment -- --file .env.example --environment local
 pnpm validate:references
 pnpm validate:markdown
@@ -85,7 +86,7 @@ pnpm build
 pnpm test:services
 ```
 
-A disposable local deployment can be generated with `pnpm deploy:local`. The script permits only the local/CI chain policy, verifies chain ID and deployed bytecode, and writes a manifest. Non-local environments remain blocked until an approved network and custody policy is recorded.
+A disposable local deployment can be generated with `pnpm deploy:local`. The script permits only the local/CI chain policy, verifies chain ID and deployed bytecode, and writes a manifest. Validate the generated evidence with `pnpm validate:deployment-manifest -- --file deployments/local.json`. Non-local environments remain blocked until an approved network and custody policy is recorded.
 
 The contract test suite covers identity lifecycle, RBAC, asset allocation, controlled transfer paths, access decisions, pause behavior, and rejection paths. The API boundary tests cover fail-closed authentication, readiness, request correlation, and production configuration rejection. Contract tests must continue to cover unauthorized minting, unauthorized role changes, duplicate allocation, ownership transfer, event emission, paused or emergency states, and any upgradeability policy. Do not deploy an unreviewed contract to a public network.
 
