@@ -78,6 +78,10 @@ jobs:
         if: ${{ hashFiles('package.json') != '' && hashFiles('config/deployment-policy.json') != '' }}
         run: pnpm validate:deployment-policy
 
+      - name: Test repository configuration guardrails
+        if: ${{ hashFiles('scripts/tests/**/*.py') != '' }}
+        run: pnpm test:config
+
       - name: Audit dependencies
         if: ${{ hashFiles('package.json') != '' }}
         run: pnpm audit --audit-level=moderate
