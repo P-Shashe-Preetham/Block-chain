@@ -11,12 +11,19 @@ import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header, Query, Request
+from fastapi import Body, Depends, FastAPI, Header, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .audit import AuditReader, AuditReaderUnavailable, ProjectionStatus, UnconfiguredAuditReader
 from .auth import Principal, require_principal
+from .intents import (
+    TransactionIntentRequest,
+    TransactionIntentWriter,
+    TransactionIntentWriterUnavailable,
+    UnconfiguredTransactionIntentWriter,
+)
+from .transactions import TransactionConflict
 from .config import Settings
 from .rpc import verify_rpc_contract
 
@@ -29,11 +36,13 @@ def create_app(
     app_settings: Settings | None = None,
     *,
     audit_reader: AuditReader | None = None,
+    transaction_intent_writer: TransactionIntentWriter | None = None,
     principal_provider: Callable[[str | None], Principal] | None = None,
 ) -> FastAPI:
     """Build an app with explicit settings and injected non-authoritative readers."""
     selected_settings = app_settings or load_settings()
     selected_audit_reader = audit_reader or UnconfiguredAuditReader()
+    selected_transaction_writer = transaction_intent_writer or UnconfiguredTransactionIntentWriter()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -87,6 +96,40 @@ def create_app(
         if principal_provider is not None:
             return principal_provider(authorization)
         return require_principal(selected_settings, authorization)
+
+    @api.post("/v1/transaction-intents", tags=["transactions"])
+    def create_transaction_intent(
+        request: TransactionIntentRequest = Body(...),
+        idempotency_key: str = Header(..., alias="Idempotency-Key"),
+        principal: Principal = Depends(principal_dependency),
+    ) -> dict[str, object]:
+        if not selected_settings.contract_address:
+            return JSONResponse(status_code=503, content={"detail": "contract is not configured"})
+        try:
+            result = selected_transaction_writer.create_or_get(
+                principal=principal,
+                idempotency_key=idempotency_key,
+                request=request,
+                chain_id=selected_settings.chain_id,
+                contract_address=selected_settings.contract_address,
+            )
+        except TransactionIntentWriterUnavailable:
+            return JSONResponse(status_code=503, content={"detail": "transaction intent service is not available"})
+        except TransactionConflict as exc:
+            return JSONResponse(status_code=409, content={"detail": str(exc)})
+        except ValueError:
+            return JSONResponse(status_code=422, content={"detail": "transaction intent is invalid"})
+        return {
+            "intent_id": result.intent_id,
+            "status": result.status.value,
+            "chain_id": result.chain_id,
+            "contract_address": result.contract_address,
+            "idempotency_key": result.idempotency_key,
+            "request_fingerprint": result.request_fingerprint,
+            "created_at": result.created_at.isoformat(),
+            "updated_at": result.updated_at.isoformat(),
+            "on_chain_submission": False,
+        }
 
     @api.get("/v1/audit", tags=["audit"])
     def audit_events(

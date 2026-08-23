@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import httpx
@@ -10,6 +11,8 @@ import httpx
 from services.api.app import create_app
 from services.api.audit import AuditEvent, MemoryAuditReader, ProjectionStatus
 from services.api.auth import Principal, extract_bearer_token
+from services.api.intents import TransactionIntentRequest, TransactionIntentResult
+from services.api.transactions import TransactionStatus
 from services.api.config import ConfigurationError, Settings
 from services.api.rpc import verify_rpc_contract
 
@@ -28,11 +31,17 @@ app = create_app(
 )
 
 
-def request_for(application, method: str, path: str, headers: dict[str, str] | None = None) -> httpx.Response:
+def request_for(
+    application,
+    method: str,
+    path: str,
+    headers: dict[str, str] | None = None,
+    json_body: object | None = None,
+) -> httpx.Response:
     async def send() -> httpx.Response:
         transport = httpx.ASGITransport(app=application)
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
-            return await client.request(method, path, headers=headers)
+            return await client.request(method, path, headers=headers, json=json_body)
 
     return asyncio.run(send())
 
@@ -102,7 +111,86 @@ class ApiBoundaryTests(unittest.TestCase):
         self.assertTrue(verify_rpc_contract(settings, client_factory=matching_factory))
         self.assertFalse(verify_rpc_contract(settings, client_factory=mismatching_factory))
 
-    def test_audit_requires_bearer_authentication(self) -> None:
+    def test_transaction_intent_requires_bearer_authentication(self) -> None:
+        response = request("POST", "/v1/transaction-intents", {"Content-Type": "application/json"})
+        self.assertEqual(response.status_code, 401)
+
+    def test_transaction_intent_default_writer_fails_closed_after_authentication(self) -> None:
+        settings = Settings(
+            app_env="local",
+            auth_issuer=None,
+            auth_audience=None,
+            auth_jwks_url=None,
+            chain_id=31337,
+            rpc_url="http://127.0.0.1:8545",
+            contract_address="0x" + "1" * 40,
+            cors_allowed_origins=("http://localhost:3000",),
+        )
+        principal = Principal("subject-fixture", frozenset({"MANAGER_ROLE"}), frozenset(), "fixture", "fixture")
+        application = create_app(settings, principal_provider=lambda _: principal)
+        response = request_for(
+            application,
+            "POST",
+            "/v1/transaction-intents",
+            {"Authorization": "Bearer fixture-token", "Idempotency-Key": "request-001"},
+        )
+        self.assertEqual(response.status_code, 422)
+
+        response = request_for(
+            application,
+            "POST",
+            "/v1/transaction-intents",
+            {"Authorization": "Bearer fixture-token", "Idempotency-Key": "request-001", "Content-Type": "application/json"},
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_transaction_intent_is_typed_idempotent_and_does_not_submit_on_chain(self) -> None:
+        settings = Settings(
+            app_env="local",
+            auth_issuer=None,
+            auth_audience=None,
+            auth_jwks_url=None,
+            chain_id=31337,
+            rpc_url="http://127.0.0.1:8545",
+            contract_address="0x" + "1" * 40,
+            cors_allowed_origins=("http://localhost:3000",),
+        )
+        principal = Principal("subject-fixture", frozenset({"MANAGER_ROLE"}), frozenset(), "fixture", "fixture")
+        captured: list[tuple[str, str]] = []
+
+        class FakeWriter:
+            def create_or_get(self, *, principal, idempotency_key, request, chain_id, contract_address):
+                captured.append((principal.subject, idempotency_key))
+                return TransactionIntentResult(
+                    intent_id="intent-fixture",
+                    status=TransactionStatus.REQUESTED,
+                    chain_id=chain_id,
+                    contract_address=contract_address,
+                    idempotency_key=idempotency_key,
+                    request_fingerprint="a" * 64,
+                    created_at=datetime(2026, 8, 23, tzinfo=timezone.utc),
+                    updated_at=datetime(2026, 8, 23, tzinfo=timezone.utc),
+                )
+
+        application = create_app(
+            settings,
+            transaction_intent_writer=FakeWriter(),
+            principal_provider=lambda _: principal,
+        )
+        body = {"operation": "register_asset", "arguments": {"asset_id": "prototype-1"}}
+        headers = {
+            "Authorization": "Bearer fixture-token",
+            "Idempotency-Key": "request-001",
+            "Content-Type": "application/json",
+        }
+        first = request_for(application, "POST", "/v1/transaction-intents", headers, body)
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first.json()["intent_id"], "intent-fixture")
+        self.assertFalse(first.json()["on_chain_submission"])
+        second = request_for(application, "POST", "/v1/transaction-intents", headers, body)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(captured, [("subject-fixture", "request-001"), ("subject-fixture", "request-001")])
+
         response = request("GET", "/v1/audit")
         self.assertEqual(response.status_code, 401)
 
