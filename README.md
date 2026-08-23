@@ -70,7 +70,7 @@ Review `.env` before running anything. Use local-only test accounts and throwawa
 
 ### Install and validate the current MVP
 
-The current implementation is the Solidity/Hardhat contract MVP, a fail-closed FastAPI service boundary with transaction-state reference primitives, and dependency-free indexer projection primitives. It does not yet include the full transaction API, RPC event consumer, durable database projections, encrypted storage service, or frontend. Do not start undocumented services or install dependencies from missing paths.
+The current implementation is the Solidity/Hardhat contract MVP, a fail-closed FastAPI service boundary with transaction-state and authorization reference primitives, confirmed RPC/indexer projection primitives, AES-GCM envelope primitives, and PostgreSQL-oriented schema primitives. It does not yet include the full transaction API, durable database migrations/projections, managed key custody or storage adapter, or frontend. Do not start undocumented services or install dependencies from missing paths.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -92,7 +92,7 @@ The contract test suite covers identity lifecycle, RBAC, asset allocation, contr
 
 ### Future API, indexer, storage, and frontend
 
-The full FastAPI transaction and audit API, RPC event consumer, PostgreSQL/Redis projections, encrypted object storage, and the Next.js/mobile client are planned components. The current `services/api` directory contains a fail-closed boundary and typed local transaction-state reference primitives; `services/indexer` contains dependency-free projection primitives. Full commands, dependencies, and endpoints must be added only in the pull request that introduces the corresponding component and tests.
+The full FastAPI transaction and audit API, durable PostgreSQL/Redis projections, managed encrypted object storage, and the Next.js/mobile client are planned components. The current `services/api` directory contains a fail-closed boundary and typed local transaction-state/authorization/rate-limit reference primitives; `services/indexer` contains confirmed RPC, projection, reorganization, and reconciliation primitives; `services/storage` contains an AES-GCM envelope reference; and `services/persistence` contains PostgreSQL-oriented schema primitives. Full routes, migrations, queues, storage adapters, and endpoints must be added only in the pull request that introduces the corresponding component and tests.
 
 ### Run quality checks
 
@@ -193,7 +193,7 @@ This prototype is maintained through reviewed pull requests, scheduled dependenc
 
 ## Project status
 
-The project is at the **prototype/MVP stage** with an executable Solidity contract baseline, focused tests, and architecture/governance documentation. The API, indexer, web/mobile clients, IPFS cluster, production key custody, and independent audit are not yet implemented or evidenced. Roadmap progress, supported networks, contract addresses, and release artifacts should be updated as implementation work is accepted.
+The project is at the **prototype/MVP stage** with an executable Solidity contract baseline, tested service/configuration primitives, and architecture/governance documentation. The complete API, durable indexer/database, web/mobile clients, IPFS cluster, production key custody, and independent audit are not yet implemented or evidenced. Roadmap progress, supported networks, contract addresses, and release artifacts should be updated as implementation work is accepted.
 
 ## Contributing and support
 
