@@ -171,6 +171,42 @@ class ApiBoundaryTests(unittest.TestCase):
             extract_bearer_token("Basic abc")
         self.assertEqual(extract_bearer_token("Bearer abc"), "abc")
 
+    def test_database_settings_allow_disposable_local_sqlite(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "APP_ENV": "local",
+                "DATABASE_URL": "sqlite+pysqlite:///:memory:",
+                "DATABASE_SSL_MODE": "disable",
+            },
+            clear=False,
+        ):
+            settings = Settings.from_env()
+        self.assertEqual(settings.database_url, "sqlite+pysqlite:///:memory:")
+        self.assertEqual(settings.database_ssl_mode, "disable")
+
+    def test_pilot_database_settings_fail_closed_without_url_or_secure_ssl(self) -> None:
+        base = {
+            "APP_ENV": "pilot",
+            "CHAIN_ID": "31337",
+            "RPC_URL": "https://rpc.example.invalid",
+            "CONTRACT_ADDRESS": "0x0000000000000000000000000000000000000001",
+            "AUTH_ISSUER": "https://issuer.example.invalid",
+            "AUTH_AUDIENCE": "platform",
+            "AUTH_JWKS_URL": "https://issuer.example.invalid/.well-known/jwks.json",
+            "CORS_ALLOWED_ORIGINS": "https://console.example.invalid",
+        }
+        with patch.dict(os.environ, base, clear=True):
+            with self.assertRaises(ConfigurationError):
+                Settings.from_env()
+        with patch.dict(
+            os.environ,
+            {**base, "DATABASE_URL": "postgresql+psycopg://user:pass@db.example/app", "DATABASE_SSL_MODE": "disable"},
+            clear=True,
+        ):
+            with self.assertRaises(ConfigurationError):
+                Settings.from_env()
+
     def test_production_settings_require_secure_trust_and_contract_configuration(self) -> None:
         production = {
             "APP_ENV": "production",

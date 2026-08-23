@@ -21,6 +21,8 @@ class Settings:
     rpc_url: str
     contract_address: str | None
     cors_allowed_origins: tuple[str, ...]
+    database_url: str | None = None
+    database_ssl_mode: str = "require"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -69,6 +71,21 @@ class Settings:
         if app_env in {"testnet", "pilot", "production"} and "*" in origins:
             raise ConfigurationError("wildcard CORS is forbidden outside local/CI")
 
+        database_url = os.getenv("DATABASE_URL", "").strip() or None
+        database_ssl_mode = os.getenv("DATABASE_SSL_MODE", "require").strip().lower()
+        if database_ssl_mode not in {"disable", "require", "verify-ca", "verify-full"}:
+            raise ConfigurationError("DATABASE_SSL_MODE is invalid")
+        if app_env in {"pilot", "production"} and not database_url:
+            raise ConfigurationError("DATABASE_URL is required for pilot and production")
+        if database_url:
+            parsed_database = urlparse(database_url)
+            if parsed_database.scheme not in {"postgresql", "postgresql+psycopg", "sqlite", "sqlite+pysqlite"}:
+                raise ConfigurationError("DATABASE_URL must use PostgreSQL or an explicitly local SQLite scheme")
+            if parsed_database.scheme.startswith("sqlite") and app_env not in {"local", "ci", "development"}:
+                raise ConfigurationError("SQLite is forbidden outside local, CI, and development")
+            if parsed_database.scheme.startswith("postgresql") and app_env in {"pilot", "production"} and database_ssl_mode not in {"require", "verify-ca", "verify-full"}:
+                raise ConfigurationError("secure PostgreSQL SSL mode is required outside local/CI")
+
         return cls(
             app_env=app_env,
             auth_issuer=auth_issuer,
@@ -78,4 +95,6 @@ class Settings:
             rpc_url=rpc_url,
             contract_address=contract_address,
             cors_allowed_origins=origins,
+            database_url=database_url,
+            database_ssl_mode=database_ssl_mode,
         )
