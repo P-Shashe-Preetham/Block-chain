@@ -8,7 +8,8 @@ from unittest.mock import patch
 import httpx
 
 from services.api.app import create_app
-from services.api.auth import extract_bearer_token
+from services.api.audit import AuditEvent, MemoryAuditReader, ProjectionStatus
+from services.api.auth import Principal, extract_bearer_token
 from services.api.config import ConfigurationError, Settings
 from services.api.rpc import verify_rpc_contract
 
@@ -25,6 +26,15 @@ app = create_app(
         cors_allowed_origins=("http://localhost:3000",),
     )
 )
+
+
+def request_for(application, method: str, path: str, headers: dict[str, str] | None = None) -> httpx.Response:
+    async def send() -> httpx.Response:
+        transport = httpx.ASGITransport(app=application)
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            return await client.request(method, path, headers=headers)
+
+    return asyncio.run(send())
 
 
 def request(method: str, path: str, headers: dict[str, str] | None = None) -> httpx.Response:
@@ -98,6 +108,53 @@ class ApiBoundaryTests(unittest.TestCase):
 
     def test_bearer_auth_fails_closed_until_oidc_is_configured(self) -> None:
         response = request("GET", "/v1/audit", {"Authorization": "Bearer opaque-test-token"})
+        self.assertEqual(response.status_code, 503)
+
+    def test_audit_returns_sanitized_projection_records_and_filters_uncertain_status(self) -> None:
+        settings = Settings(
+            app_env="local",
+            auth_issuer=None,
+            auth_audience=None,
+            auth_jwks_url=None,
+            chain_id=31337,
+            rpc_url="http://127.0.0.1:8545",
+            contract_address=None,
+            cors_allowed_origins=("http://localhost:3000",),
+        )
+        reader = MemoryAuditReader(
+            (
+                AuditEvent("event-canonical", 31337, "0x" + "1" * 40, "0x" + "2" * 64, 0, 1, "AssetRegistered", ProjectionStatus.CANONICAL),
+                AuditEvent("event-uncertain", 31337, "0x" + "1" * 40, "0x" + "3" * 64, 0, 2, "AssetRegistered", ProjectionStatus.UNCERTAIN),
+            )
+        )
+        principal = Principal("subject-fixture", frozenset({"AUDITOR_ROLE"}), frozenset(), "fixture", "fixture")
+        application = create_app(settings, audit_reader=reader, principal_provider=lambda _: principal)
+        response = request_for(
+            application,
+            "GET",
+            "/v1/audit?limit=10&projection_status=uncertain",
+            {"Authorization": "Bearer fixture-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["projection_only"], True)
+        self.assertEqual([event["event_id"] for event in response.json()["events"]], ["event-uncertain"])
+        self.assertNotIn("topics", response.json()["events"][0])
+        self.assertNotIn("payload", response.json()["events"][0])
+
+    def test_audit_projection_unavailable_fails_closed_after_authentication(self) -> None:
+        settings = Settings(
+            app_env="local",
+            auth_issuer=None,
+            auth_audience=None,
+            auth_jwks_url=None,
+            chain_id=31337,
+            rpc_url="http://127.0.0.1:8545",
+            contract_address=None,
+            cors_allowed_origins=("http://localhost:3000",),
+        )
+        principal = Principal("subject-fixture", frozenset({"AUDITOR_ROLE"}), frozenset(), "fixture", "fixture")
+        application = create_app(settings, principal_provider=lambda _: principal)
+        response = request_for(application, "GET", "/v1/audit", {"Authorization": "Bearer fixture-token"})
         self.assertEqual(response.status_code, 503)
 
     def test_request_id_is_returned_and_invalid_control_characters_are_rejected(self) -> None:

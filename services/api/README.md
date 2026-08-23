@@ -8,7 +8,7 @@ This directory contains the first **fail-closed API boundary** for the platform.
 |---|---|---|
 | `GET /healthz` | Public | Returns a minimal liveness response without configuration, identity, or chain data. |
 | `GET /readyz` | Public | Returns `503` until a contract address is configured and the configured RPC reports the expected chain ID plus non-empty deployed bytecode. Future versions must add indexer, database, and key-service readiness checks. |
-| `GET /v1/audit` | Bearer token required | Returns `501` until the canonical event indexer and audit projection exist. Missing or unconfigured authentication fails closed. |
+| `GET /v1/audit` | Bearer token required | Reads an injected, sanitized, projection-only audit reader with bounded `limit` and explicit `projection_status` filtering. The default durable reader is unavailable and returns `503`; missing or unconfigured authentication fails closed. No raw logs, identity material, keys, or plaintext asset content are returned. |
 
 ## Configuration
 
@@ -29,4 +29,4 @@ python3 -m pip install --require-hashes --requirement services/api/requirements.
 PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'
 ```
 
-The API service must not be used with real identity data, production credentials, organizational asset data, or unapproved BEL data. The repository now includes a typed transaction-intent state machine with idempotency-conflict protection for local reference use. The dependency surface intentionally excludes cryptographic verifier libraries until a genuine OIDC/JWKS or wallet verifier is implemented. The next implementation phase must persist the state machine in a durable database with unique constraints, expiry/retention, authenticated ownership, receipt/event confirmation, replacement/reorg handling, privacy-safe audit projection, rate limits, session invalidation, and route-level authorization before exposing business endpoints.
+The API service must not be used with real identity data, production credentials, organizational asset data, or unapproved BEL data. The repository now includes a typed transaction-intent state machine with idempotency-conflict protection and a sanitized audit projection route for local reference use. The dependency surface intentionally excludes cryptographic verifier libraries until a genuine OIDC/JWKS or wallet verifier is implemented. The next implementation phase must wire a durable PostgreSQL audit reader, persist the transaction state machine with unique constraints, expiry/retention, authenticated ownership, receipt/event confirmation, replacement/reorg handling, distributed rate limits, session invalidation, and route-level authorization before exposing state-changing business endpoints.

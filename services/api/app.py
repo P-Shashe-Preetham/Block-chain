@@ -1,19 +1,21 @@
-"""Fail-closed API boundary for the platform MVP.
+"""Fail-closed API boundary for the platform final-project work.
 
-This module deliberately exposes only health/readiness and a protected audit
-placeholder until the canonical event indexer and database projection exist.
-It is not a production asset API.
+This module exposes health/readiness and an injected, sanitized read-only audit
+projection route. It is not yet the complete transaction, identity, asset,
+storage, or production authorization API.
 """
 
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .audit import AuditReader, AuditReaderUnavailable, ProjectionStatus, UnconfiguredAuditReader
 from .auth import Principal, require_principal
 from .config import Settings
 from .rpc import verify_rpc_contract
@@ -23,9 +25,15 @@ def load_settings() -> Settings:
     return Settings.from_env()
 
 
-def create_app(app_settings: Settings | None = None) -> FastAPI:
-    """Build an app with explicit settings; production startup still validates env settings."""
+def create_app(
+    app_settings: Settings | None = None,
+    *,
+    audit_reader: AuditReader | None = None,
+    principal_provider: Callable[[str | None], Principal] | None = None,
+) -> FastAPI:
+    """Build an app with explicit settings and injected non-authoritative readers."""
     selected_settings = app_settings or load_settings()
+    selected_audit_reader = audit_reader or UnconfiguredAuditReader()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -35,8 +43,8 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
 
     api = FastAPI(
         title="Blockchain Secure Platform API",
-        version="0.1.0-mvp",
-        description="Fail-closed API boundary for the contract MVP; full services are staged work.",
+        version="0.2.0-final-project-foundation",
+        description="Fail-closed API foundation with a sanitized projection-only audit route; state-changing services remain gated.",
         docs_url="/docs" if selected_settings.app_env in {"local", "ci", "development"} else None,
         redoc_url="/redoc" if selected_settings.app_env in {"local", "ci", "development"} else None,
         lifespan=lifespan,
@@ -76,14 +84,39 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
         return {"status": "ready"}
 
     def principal_dependency(authorization: str | None = Header(default=None)) -> Principal:
+        if principal_provider is not None:
+            return principal_provider(authorization)
         return require_principal(selected_settings, authorization)
 
     @api.get("/v1/audit", tags=["audit"])
-    def audit_placeholder(principal: Principal = Depends(principal_dependency)):
+    def audit_events(
+        limit: int = Query(default=50, ge=1, le=100),
+        projection_status: ProjectionStatus | None = Query(default=None),
+        principal: Principal = Depends(principal_dependency),
+    ) -> dict[str, object]:
         del principal
-        return JSONResponse(
-            status_code=501,
-            content={"detail": "canonical event indexer and audit projection are not implemented in the MVP"},
-        )
+        try:
+            events = selected_audit_reader.list_events(limit=limit, projection_status=projection_status)
+        except AuditReaderUnavailable as exc:
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "audit projection is not available"},
+            )
+        return {
+            "projection_only": True,
+            "events": [
+                {
+                    "event_id": event.event_id,
+                    "chain_id": event.chain_id,
+                    "contract_address": event.contract_address,
+                    "transaction_hash": event.transaction_hash,
+                    "log_index": event.log_index,
+                    "block_number": event.block_number,
+                    "event_name": event.event_name,
+                    "projection_status": event.projection_status.value,
+                }
+                for event in events
+            ],
+        }
 
     return api
