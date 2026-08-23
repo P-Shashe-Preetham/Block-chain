@@ -28,6 +28,7 @@
     "test:services": "PYTHONPATH=. python3 -m unittest discover -s services -p 'test_*.py'",
     "test:coverage": "hardhat test --coverage",
     "test:web": "pnpm --filter @blockchain-secure-platform/web-console test",
+    "test:web:e2e": "pnpm --filter @blockchain-secure-platform/web-console test:e2e",
     "test:verifier": "node --test scripts/tests/test_verifier.mjs"
   },
   "devDependencies": {

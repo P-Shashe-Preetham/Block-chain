@@ -136,6 +136,7 @@ jobs:
         run: |
           pnpm check:web
           pnpm test:web
+          pnpm test:web:e2e
 
       - name: Test Python services
         if: ${{ hashFiles('services/**/*.py') != '' || hashFiles('tests/**/*.py') != '' }}

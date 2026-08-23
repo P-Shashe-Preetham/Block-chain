@@ -10,7 +10,8 @@
     "build": "tsc -b && vite build",
     "check": "tsc -b",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@tanstack/react-query": "5.90.20",
@@ -20,6 +21,8 @@
   "devDependencies": {
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.62.1",
     "@vitejs/plugin-react": "5.1.2",
     "typescript": "5.9.3",
     "vite": "7.3.5",
