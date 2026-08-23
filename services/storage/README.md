@@ -6,6 +6,8 @@ The primitive does **not** implement object storage, access control, malware sca
 
 `services/storage/key_release.py` is a policy-only reference boundary. It requires an active requester, an active key reference, matching `GRANTED` access-decision evidence, a non-expired evidence timestamp, and a non-empty audit request identifier. It returns authorization metadata only; it never returns or derives key material. A reviewed production adapter must enforce this decision inside an approved KMS/HSM with independent IAM, release, revocation, rotation, and audit controls. The policy does not prove that a caller is authenticated or that the evidence was freshly read from the canonical contract.
 
+`services/storage/classification.py` is a declared-metadata gate, not a content classifier or DLP system. It permits only public metadata and explicitly encrypted asset ciphertext within a bounded prototype size, and rejects unknown, identity-document, biometric, secret, and regulated classes. It cannot prove that a caller’s declaration is truthful; an approved classifier and privacy/data-owner decision remain required before real data.
+
 Before testnet or pilot use, an approved storage adapter must obtain data-encryption keys through managed custody, authenticate the storage object and metadata, bind tenant/asset/version context as associated data, enforce size and content policies, handle revocation and expiry, and record non-sensitive audit events. IPFS or object storage is not a confidentiality or deletion mechanism by itself.
 
 Local validation from the repository root:
