@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 
 class DatabaseConfigurationError(RuntimeError):
@@ -35,6 +36,11 @@ class DatabaseSettings:
                 raise DatabaseConfigurationError("PostgreSQL URL must include a host and database name")
             if self.app_env in {"testnet", "pilot", "production"} and self.database_ssl_mode not in {"require", "verify-ca", "verify-full"}:
                 raise DatabaseConfigurationError("secure PostgreSQL SSL mode is required outside local/CI")
+
+
+def create_session_factory(settings: DatabaseSettings) -> sessionmaker[Session]:
+    """Create a non-connecting session factory from the validated engine boundary."""
+    return sessionmaker(create_database_engine(settings), expire_on_commit=False)
 
 
 def create_database_engine(settings: DatabaseSettings) -> Engine:

@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from services.persistence.database import DatabaseConfigurationError, DatabaseSettings, create_database_engine
+from services.persistence.database import (
+    DatabaseConfigurationError,
+    DatabaseSettings,
+    create_database_engine,
+    create_session_factory,
+)
 
 
 class DatabaseSettingsTests(unittest.TestCase):
@@ -31,6 +36,14 @@ class DatabaseSettingsTests(unittest.TestCase):
         )
         self.assertEqual(engine.dialect.name, "postgresql")
         self.assertEqual(engine.url.drivername, "postgresql+psycopg")
+        self.assertTrue(engine.hide_parameters)
+
+    def test_session_factory_is_lazy_and_parameter_hidden(self) -> None:
+        factory = create_session_factory(
+            DatabaseSettings("development", "postgresql+psycopg://user:pass@db.example/app", "require")
+        )
+        engine = factory.kw["bind"]
+        self.assertEqual(engine.dialect.name, "postgresql")
         self.assertTrue(engine.hide_parameters)
 
     def test_invalid_scheme_and_missing_url_fail_closed(self) -> None:
