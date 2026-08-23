@@ -29,6 +29,7 @@
     "test:coverage": "hardhat test --coverage",
     "test:web": "pnpm --filter @blockchain-secure-platform/web-console test",
     "test:web:e2e": "pnpm --filter @blockchain-secure-platform/web-console test:e2e",
+    "test:echidna": "./scripts/run_echidna_local.sh",
     "test:verifier": "node --test scripts/tests/test_verifier.mjs"
   },
   "devDependencies": {
