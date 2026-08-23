@@ -103,6 +103,10 @@ jobs:
         if: ${{ hashFiles('package.json') != '' }}
         run: pnpm validate:markdown
 
+      - name: Validate local Compose topology
+        if: ${{ hashFiles('docker-compose.yml') != '' }}
+        run: docker compose -f docker-compose.yml config -q
+
       - name: Validate deployment policy
         if: ${{ hashFiles('package.json') != '' && hashFiles('config/deployment-policy.json') != '' }}
         run: pnpm validate:deployment-policy
