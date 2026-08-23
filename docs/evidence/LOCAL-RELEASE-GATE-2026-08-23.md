@@ -2,15 +2,15 @@
 
 ## Decision
 
-**Result: NOT ELIGIBLE FOR PUSH.** The available local checks passed for revision `cbdb6af96bf5bd063ca4e58cf268dabbf56f90b7`, but the full gate in [FINAL-RELEASE-GATE.md](../FINAL-RELEASE-GATE.md) is not green. This record preserves the user's no-push rule: no source change after `5065c86` has been pushed, and the branch must remain local-only until every selected local gate is objectively satisfied.
+**Result: NOT ELIGIBLE FOR PUSH.** The available full local assurance suite passed for revision `9dfbce9cab082a064ca2f606608c096a94f82e42`, but the full gate in [FINAL-RELEASE-GATE.md](../FINAL-RELEASE-GATE.md) is not green. This record preserves the user's no-push rule: no source change after `5065c86` has been pushed, and the branch must remain local-only until every selected local gate is objectively satisfied.
 
-The archived combined command output has SHA-256 `3bf16c6221785b9dd80ce9b6bd3d15212c956628fc5f46439c57c4a5178b56f7` in the sandbox evidence location. It contains no committed credentials or real identity data.
+The latest archived combined command output has SHA-256 `9d3733f809765c99eb929a2592f2337ae48b6ece9424a90ff11c435627f84911` in the sandbox evidence location. Earlier staged evidence remains separately hashed; no output file is committed and neither contains committed credentials or real identity data.
 
 ## Successful local evidence
 
 | Gate family | Observed command/evidence | Result |
 |---|---|---|
-| Worktree before evidence record | `git status --short --branch` at `cbdb6af` | Clean; local branch was ahead of origin by seven commits and was not pushed. |
+| Worktree before current assurance run | `git status --short --branch` at `9dfbce9` | Clean; local branch was ahead of origin by eleven commits and was not pushed. |
 | Supply chain | `pnpm audit --audit-level=low` | Pass: no known vulnerabilities. |
 | Source controls | `pnpm validate:references` | Pass: 15 original references and 96 ledger records; no submodules or unapproved package integrations. |
 | Documentation controls | `pnpm validate:markdown`; `git diff --check` | Pass. |
@@ -21,6 +21,7 @@ The archived combined command output has SHA-256 `3bf16c6221785b9dd80ce9b6bd3d15
 | Services | `pnpm test:services` | Pass: 91 tests. |
 | Indexer | `pnpm validate:indexer-abi` | Pass: 17 compiled event fragments. |
 | Web console | `pnpm check:web`; `pnpm test:web`; `pnpm build:web` | Pass: strict check, 3 boundary tests, static build. |
+| Browser E2E/accessibility | `pnpm test:web:e2e` with local system Chromium | Pass: two critical tests cover keyboard/skip navigation, explicit unavailable state, empty browser storage, rail interaction, and axe analysis with no violations. |
 | Independent verifier | `pnpm test:verifier` | Pass: 3 direct-RPC verifier unit tests. |
 | Operations structure | `sudo docker compose config -q`; local image inspection | Pass: Compose configuration parses; API/migration/web images built and configured entry points were inspected. |
 | Synthetic durable-state drill | `scripts/drills/postgres_backup_restore_reconcile.sh` against guarded local PostgreSQL | Pass: restored row counts matched for transaction intents, canonical events, raw logs, checkpoints, and reconciliation findings; temporary database/archive removed. |
