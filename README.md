@@ -193,7 +193,7 @@ This prototype is maintained through reviewed pull requests, scheduled dependenc
 
 ## Project status
 
-The project is at the **prototype/MVP stage** with an executable Solidity contract baseline, tested service/configuration primitives, and architecture/governance documentation. The complete API, durable indexer/database, web/mobile clients, IPFS cluster, production key custody, and independent audit are not yet implemented or evidenced. Roadmap progress, supported networks, contract addresses, and release artifacts should be updated as implementation work is accepted.
+The project is in an **active final-project execution phase**: the Solidity/Hardhat contract baseline and tested fail-closed API, indexer, persistence, and storage reference boundaries are implemented, while the integrated web console, approved identity provider, genuine PostgreSQL service, background worker, KMS/HSM custody, production storage adapter, and independent assurance remain gated work. This label does not claim production readiness, controlled-testnet approval, independent audit, legal approval, or BEL endorsement. The maintained execution roadmap is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md); progress, owners, evidence, and blockers must be updated as each gate is accepted.
 
 ## Contributing and support
 
@@ -201,7 +201,7 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Securit
 
 ## Curated reference projects
 
-The repository preserves the 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger projects as curated references. Review [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md) for the complete catalog, [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md) for adoption decisions, and [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for attribution and license boundaries. Only OpenZeppelin Contracts is currently adopted as a runtime dependency; the other projects are not vendored, added as submodules, or represented as product components.
+The repository preserves the 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger projects as curated references. Review [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md) for the original catalog, [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md) for original adoption decisions, [`docs/reference-ledger.md`](docs/reference-ledger.md) for the complete 96-source utilization ledger, and [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for attribution and license boundaries. Only OpenZeppelin Contracts is currently adopted as a runtime dependency; the other projects and the expanded full-stack/tooling sources are not silently vendored, added as submodules, or represented as product components without a focused gate.
 
 ## License and citation
 

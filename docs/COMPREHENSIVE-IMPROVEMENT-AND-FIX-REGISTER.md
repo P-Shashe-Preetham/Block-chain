@@ -286,7 +286,7 @@ The repository has strong baseline hardening: workflow actions are pinned to com
 | DOC-05 | Reconcile `.env.example` with the actual contract topology. It now names one combined MVP contract and labels future service settings as staged. | P1 | Implemented for current MVP / monitor future service additions | Environment schema validation and documented migration. |
 | DOC-06 | Mark every placeholder endpoint, password, signer key, S3 value, session secret, and contact address as local-only and ensure production startup rejects placeholders. | P0 | Partial | Startup validation and secret scan. |
 | DOC-07 | Add machine-readable environment schema and validate required variables, formats, allowed chain IDs, URLs, and secret strength. | P1 | Partial: schema and dependency-free validator implemented; service-specific startup validation continues | Schema tests and startup failure tests. |
-| DOC-08 | Keep README, architecture, roadmap, acceptance criteria, threat model, compliance report, ADRs, changelog, and security status synchronized with actual implementation. | P1 | Ongoing | Documentation consistency CI and release checklist. |
+| DOC-08 | Keep README, architecture, roadmap, acceptance criteria, threat model, compliance report, ADRs, changelog, and security status synchronized with actual implementation. | P1 | Partial: README now links the maintained final-project execution plan and complete reference ledger; the plan remains an execution baseline and all component maturity claims remain evidence-gated | Documentation consistency CI and release checklist. |
 | DOC-09 | Publish contract ABI, deployment records, event schema, supported network matrix, and verifier instructions for every accepted deployment. | P1 | Partial: manifest schema and guarded local deployment record exist; accepted-network matrix and independent verification walkthrough pending | Versioned artifacts and independent verification walkthrough. |
 | DOC-10 | Add diagrams for trust boundaries, data flow, key flow, transaction state, indexer reconciliation, and incident response. | P2 | Partial | Reviewed diagrams linked from architecture. |
 | DOC-11 | Replace placeholder security/support contacts with approved monitored channels before public launch. | P0 | Placeholder | Contact test and ownership record. |
@@ -349,12 +349,12 @@ The 15 supplied repositories remain curated references, not automatically integr
 
 | ID | Improvement or fix | Priority | Acceptance evidence |
 |---|---|---:|---|
-| REF-01 | Revalidate all 15 canonical URLs and repository names periodically. | P2 | Passing `validate:references` and review record. |
-| REF-02 | Record the exact version/commit consulted when a reference influences implementation. | P1 | Integration matrix with commit/date and rationale. |
+| REF-01 | Revalidate all 15 canonical URLs and repository names periodically. | P2 | Partial: existing 15-reference validation remains active and now also requires the complete 96-source utilization ledger; upstream revision/date revalidation remains owner-led and pending | Passing `validate:references` and review record. |
+| REF-02 | Record the exact version/commit consulted when a reference influences implementation. | P1 | Partial: `docs/reference-ledger.md` records every supplied source, use, decision, and gate; exact consulted upstream revisions/dates are intentionally marked pending until owner-led review and are not fabricated | Integration matrix with commit/date and rationale. |
 | REF-03 | Verify license compatibility before copying code, schemas, assets, or documentation. | P0 | License review and approved notice. |
 | REF-04 | Do not add reference repositories as unreviewed submodules, vendored code, runtime dependencies, or hidden services. | P0 | Dependency and source-tree audit. |
 | REF-05 | Update `THIRD-PARTY-NOTICES.md` whenever an external implementation is adopted. | P1 | Notice diff included in the same PR. |
-| REF-06 | Separate design inspiration from tested product behavior in README, architecture, compliance, and demos. | P1 | Claims review and traceability update. |
+| REF-06 | Separate design inspiration from tested product behavior in README, architecture, compliance, and demos. | P1 | Partial: the final-project plan and 96-source ledger classify runtime, pattern, comparison, future-gated, reference-only, and research-only use; implementation and demo claims remain separately evidence-gated | Claims review and traceability update. |
 
 ## 16. Correctness and repository hygiene checks to perform every change
 
