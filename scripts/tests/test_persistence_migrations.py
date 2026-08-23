@@ -30,7 +30,10 @@ class PersistenceMigrationTests(unittest.TestCase):
                     os.environ["DATABASE_URL"] = previous
 
             engine = create_engine(f"sqlite:///{database_path}")
-            tables = set(inspect(engine).get_table_names())
+            inspector = inspect(engine)
+            tables = set(inspector.get_table_names())
+            transaction_constraints = {item["name"] for item in inspector.get_check_constraints("transaction_intents")}
+            event_constraints = {item["name"] for item in inspector.get_check_constraints("canonical_events")}
         self.assertTrue({
             "alembic_version",
             "transaction_intents",
@@ -39,6 +42,8 @@ class PersistenceMigrationTests(unittest.TestCase):
             "block_checkpoints",
             "reconciliation_findings",
         }.issubset(tables))
+        self.assertIn("ck_transaction_intent_status", transaction_constraints)
+        self.assertIn("ck_canonical_event_projection_status", event_constraints)
 
 
 if __name__ == "__main__":

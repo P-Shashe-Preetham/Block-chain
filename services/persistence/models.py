@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -19,7 +19,13 @@ class Base(DeclarativeBase):
 
 class TransactionIntent(Base):
     __tablename__ = "transaction_intents"
-    __table_args__ = (UniqueConstraint("subject_key", "idempotency_key", name="uq_transaction_subject_idempotency"),)
+    __table_args__ = (
+        UniqueConstraint("subject_key", "idempotency_key", name="uq_transaction_subject_idempotency"),
+        CheckConstraint(
+            "status IN ('requested', 'signed', 'submitted', 'pending', 'confirmed', 'failed', 'reverted', 'replaced', 'unknown')",
+            name="ck_transaction_intent_status",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     subject_key: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -33,10 +39,16 @@ class TransactionIntent(Base):
 
 class CanonicalEventRecord(Base):
     __tablename__ = "canonical_events"
-    __table_args__ = (UniqueConstraint(
-        "chain_id", "contract_address", "transaction_hash", "log_index", "event_version",
-        name="uq_canonical_event_identity",
-    ),)
+    __table_args__ = (
+        UniqueConstraint(
+            "chain_id", "contract_address", "transaction_hash", "log_index", "event_version",
+            name="uq_canonical_event_identity",
+        ),
+        CheckConstraint(
+            "projection_status IN ('canonical', 'unfinalized', 'uncertain')",
+            name="ck_canonical_event_projection_status",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(160), primary_key=True)
     chain_id: Mapped[int] = mapped_column(Integer, nullable=False)

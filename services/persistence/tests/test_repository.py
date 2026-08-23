@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from services.api.transactions import TransactionConflict
+from services.api.transactions import InvalidTransactionTransition, TransactionConflict, TransactionStatus
 from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
 from services.indexer.reconcile import find_drift
@@ -21,6 +21,7 @@ from services.persistence.repository import (
     remove_checkpoints_from,
     record_block_checkpoint,
     restore_replayed_event,
+    transition_transaction_intent,
 )
 
 
@@ -62,6 +63,87 @@ class PersistenceRepositoryTests(unittest.TestCase):
                     subject_key="subject-1",
                     idempotency_key="request-1",
                     request_fingerprint="b" * 64,
+                    now=NOW,
+                )
+
+    def test_durable_transaction_intent_transitions_follow_closed_state_machine(self) -> None:
+        with Session(self.engine) as session:
+            intent = create_or_get_transaction_intent(
+                session,
+                intent_id="intent-transition-1",
+                subject_key="subject-transition-1",
+                idempotency_key="request-transition-1",
+                request_fingerprint="c" * 64,
+                now=NOW,
+            )
+            signed = transition_transaction_intent(
+                session,
+                subject_key="subject-transition-1",
+                idempotency_key="request-transition-1",
+                next_status=TransactionStatus.SIGNED,
+                now=NOW,
+            )
+            self.assertEqual(signed.status, TransactionStatus.SIGNED.value)
+            with self.assertRaises(ValueError):
+                transition_transaction_intent(
+                    session,
+                    subject_key="subject-transition-1",
+                    idempotency_key="request-transition-1",
+                    next_status=TransactionStatus.SUBMITTED,
+                    now=NOW,
+                )
+            submitted = transition_transaction_intent(
+                session,
+                subject_key="subject-transition-1",
+                idempotency_key="request-transition-1",
+                next_status=TransactionStatus.SUBMITTED,
+                transaction_hash="0x" + "a" * 64,
+                now=NOW,
+            )
+            self.assertEqual(submitted.transaction_hash, "0x" + "a" * 64)
+            pending = transition_transaction_intent(
+                session,
+                subject_key="subject-transition-1",
+                idempotency_key="request-transition-1",
+                next_status="pending",
+                now=NOW,
+            )
+            self.assertEqual(pending.status, "pending")
+            confirmed = transition_transaction_intent(
+                session,
+                subject_key="subject-transition-1",
+                idempotency_key="request-transition-1",
+                next_status=TransactionStatus.CONFIRMED,
+                now=NOW,
+            )
+            self.assertEqual(confirmed.status, "confirmed")
+            with self.assertRaises(InvalidTransactionTransition):
+                transition_transaction_intent(
+                    session,
+                    subject_key="subject-transition-1",
+                    idempotency_key="request-transition-1",
+                    next_status=TransactionStatus.FAILED,
+                    now=NOW,
+                )
+            with self.assertRaises(KeyError):
+                transition_transaction_intent(
+                    session,
+                    subject_key="unknown-subject",
+                    idempotency_key="unknown-request",
+                    next_status=TransactionStatus.SIGNED,
+                    now=NOW,
+                )
+
+    def test_invalid_initial_transaction_status_is_rejected(self) -> None:
+        with Session(self.engine) as session:
+            with self.assertRaises(ValueError):
+                create_or_get_transaction_intent(
+                    session,
+                    intent_id="intent-invalid-status",
+                    subject_key="subject-invalid-status",
+                    idempotency_key="request-invalid-status",
+                    request_fingerprint="d" * 64,
+                    status="authoritative",
                     now=NOW,
                 )
 

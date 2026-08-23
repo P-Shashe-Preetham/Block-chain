@@ -15,7 +15,12 @@ from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from services.api.transactions import TransactionConflict
+from services.api.transactions import (
+    ALLOWED_TRANSITIONS,
+    InvalidTransactionTransition,
+    TransactionConflict,
+    TransactionStatus,
+)
 from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
 from services.indexer.reconcile import Drift
@@ -56,12 +61,18 @@ def create_or_get_transaction_intent(
             raise TransactionConflict("idempotency key was already used for another request")
         return existing
     timestamp = now or datetime.now(timezone.utc)
+    try:
+        selected_status = TransactionStatus(status)
+    except ValueError as exc:
+        raise ValueError("transaction status is invalid") from exc
+    if selected_status in {TransactionStatus.SUBMITTED, TransactionStatus.PENDING, TransactionStatus.CONFIRMED} and not transaction_hash:
+        raise ValueError("a transaction hash is required once submission begins")
     intent = TransactionIntent(
         id=intent_id,
         subject_key=subject_key,
         idempotency_key=idempotency_key,
         request_fingerprint=request_fingerprint,
-        status=status,
+        status=selected_status.value,
         transaction_hash=transaction_hash,
         created_at=timestamp,
         updated_at=timestamp,
@@ -69,6 +80,47 @@ def create_or_get_transaction_intent(
     session.add(intent)
     session.flush()
     return intent
+
+
+def transition_transaction_intent(
+    session: Session,
+    *,
+    subject_key: str,
+    idempotency_key: str,
+    next_status: TransactionStatus | str,
+    transaction_hash: str | None = None,
+    now: datetime | None = None,
+) -> TransactionIntent:
+    """Apply one legal durable state transition within the caller's transaction."""
+    _require_text(subject_key, "subject_key", 128)
+    _require_text(idempotency_key, "idempotency_key", 128)
+    existing = session.scalar(
+        select(TransactionIntent).where(
+            TransactionIntent.subject_key == subject_key,
+            TransactionIntent.idempotency_key == idempotency_key,
+        )
+    )
+    if existing is None:
+        raise KeyError(idempotency_key)
+    try:
+        current_status = TransactionStatus(existing.status)
+        selected_status = TransactionStatus(next_status)
+    except ValueError as exc:
+        raise ValueError("transaction status is invalid") from exc
+    if selected_status not in ALLOWED_TRANSITIONS[current_status]:
+        raise InvalidTransactionTransition(f"{current_status} -> {selected_status} is not allowed")
+    if transaction_hash is not None:
+        _require_transaction_hash(transaction_hash)
+    if selected_status in {TransactionStatus.SUBMITTED, TransactionStatus.PENDING, TransactionStatus.CONFIRMED} and not (
+        transaction_hash or existing.transaction_hash
+    ):
+        raise ValueError("a transaction hash is required once submission begins")
+    existing.status = selected_status.value
+    if transaction_hash:
+        existing.transaction_hash = transaction_hash
+    existing.updated_at = now or datetime.now(timezone.utc)
+    session.flush()
+    return existing
 
 
 def insert_reconciliation_finding(
@@ -331,6 +383,12 @@ def restore_replayed_event(
 def _validate_block_quantity(chain_id: int, block_number: int) -> None:
     if chain_id < 1 or block_number < 0:
         raise ValueError("chain ID and block number are invalid")
+
+
+def _require_transaction_hash(value: str) -> None:
+    _require_text(value, "transaction_hash", 66)
+    if len(value) != 66 or not value.startswith("0x") or any(char not in "0123456789abcdefABCDEF" for char in value[2:]):
+        raise ValueError("transaction_hash is invalid")
 
 
 def _validate_block_identity(chain_id: int, block_number: int, block_hash: str) -> None:

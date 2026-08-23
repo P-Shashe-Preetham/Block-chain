@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import unittest
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from sqlalchemy import create_engine, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from services.api.audit import AuditReaderUnavailable, ProjectionStatus
@@ -57,15 +59,44 @@ class SQLAlchemyAuditReaderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             reader.list_events(limit=101, projection_status=None)
 
-    def test_unknown_projection_status_fails_closed(self) -> None:
+    def test_database_rejects_unknown_projection_status(self) -> None:
         with self.session_factory() as session:
-            session.execute(
-                update(CanonicalEventRecord)
-                .where(CanonicalEventRecord.event_name == "AssetRegistered")
-                .values(projection_status="authoritative")
-            )
-            session.commit()
-        reader = SQLAlchemyAuditReader(self.session_factory, chain_id=31337, contract_address=CONTRACT)
+            with self.assertRaises(IntegrityError):
+                session.execute(
+                    update(CanonicalEventRecord)
+                    .where(CanonicalEventRecord.event_name == "AssetRegistered")
+                    .values(projection_status="authoritative")
+                )
+                session.commit()
+            session.rollback()
+
+    def test_legacy_unknown_projection_status_fails_closed_in_adapter(self) -> None:
+        legacy_row = SimpleNamespace(
+            id="legacy-event",
+            chain_id=31337,
+            contract_address=CONTRACT,
+            transaction_hash="0x" + "a" * 64,
+            log_index=0,
+            block_number=1,
+            event_name="AssetRegistered",
+            projection_status="authoritative",
+        )
+
+        class FakeResult:
+            def all(self):
+                return [legacy_row]
+
+        class FakeSession:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return None
+
+            def scalars(self, _statement):
+                return FakeResult()
+
+        reader = SQLAlchemyAuditReader(lambda: FakeSession(), chain_id=31337, contract_address=CONTRACT)
         with self.assertRaises(AuditReaderUnavailable):
             reader.list_events(limit=10, projection_status=None)
 
