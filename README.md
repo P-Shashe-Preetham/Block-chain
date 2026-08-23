@@ -197,7 +197,7 @@ The project is at the **prototype/MVP stage** with an executable Solidity contra
 
 ## Contributing and support
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md). Proposal alignment and production-gate status are tracked in [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md). Requirement-level evidence is mapped in [`docs/PROBLEM-STATEMENT-TRACEABILITY.md`](docs/PROBLEM-STATEMENT-TRACEABILITY.md).
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request. Security vulnerabilities must follow [`SECURITY.md`](SECURITY.md), not a public issue. General questions belong in [`SUPPORT.md`](SUPPORT.md). Architectural changes should follow the RFC and ADR workflow in [`GOVERNANCE.md`](GOVERNANCE.md). The current asset/network, authorization/upgradeability, and durable database boundaries are recorded in [`docs/ADR/0002-mvp-asset-standard-and-network-strategy.md`](docs/ADR/0002-mvp-asset-standard-and-network-strategy.md), [`docs/ADR/0003-mvp-authorization-and-upgradeability-boundary.md`](docs/ADR/0003-mvp-authorization-and-upgradeability-boundary.md), and [`docs/ADR/0004-python-postgresql-durability.md`](docs/ADR/0004-python-postgresql-durability.md). Proposal alignment and production-gate status are tracked in [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md). Requirement-level evidence is mapped in [`docs/PROBLEM-STATEMENT-TRACEABILITY.md`](docs/PROBLEM-STATEMENT-TRACEABILITY.md).
 
 ## Curated reference projects
 
