@@ -1,50 +1,44 @@
-# MVP Acceptance Criteria
+# Final Project Acceptance Criteria
 
-## Purpose
+## Purpose and release interpretation
 
-These criteria define what must be demonstrated for a controlled local or testnet MVP submission against Problem Statement 26125. Passing them does not establish production readiness, legal ownership, institutional approval, or security-audit completion.
+These criteria define the **submission-ready final-project** acceptance target for Problem Statement 26125. Passing an implemented scenario proves the stated local/CI evidence only. A blocked scenario is accepted only when the associated feature remains disabled or fails closed and its missing external decision is visible. Nothing in this document establishes production readiness, a real identity assurance program, legal title, real-data handling, network approval, KMS custody, or independent security assurance.
 
-## Identity and access
+The release owner must apply [the Final Release Gate](FINAL-RELEASE-GATE.md), the [decision register](FINAL-PROJECT-DECISION-REGISTER.md), the [data dictionary](FINAL-PROJECT-DATA-DICTIONARY.md), and the source ledger together. The role names below describe system personas, not real people or granted organizational authority.
 
-| ID | Given | When | Then |
+## Authoritative scenario matrix
+
+| ID | Persona | Success scenario | Failure scenario | Required observable evidence | Current scope |
+|---|---|---|---|---|---|
+| AC-01 | Administrator | An active default administrator registers a nonzero unique DID-hash commitment and receives `IdentityRegistered`. | A zero address/hash, duplicate subject/hash, inactive action, or unprivileged caller reverts without state change. | Contract unit/negative/property tests and emitted event fixture. | Implemented local/CI contract evidence. |
+| AC-02 | Administrator | The administrator deactivates or offboards a non-admin subject; operational roles are revoked and a status event is emitted. | The administrator attempts to deactivate/offboard a default administrator or an unregistered subject. | Lifecycle tests, role-state assertions, `IdentityStatusChanged` and `IdentityOffboarded` evidence. | Implemented contract evidence; HR/identity approval workflow remains externally gated. |
+| AC-03 | Administrator | The administrator replaces a non-admin contract key with a new registered active identity commitment, preserving allowed operational role state. | Duplicate/zero/reused identity commitments or default-admin replacement are rejected. | Contract lifecycle test and emitted replacement/registration/status events. | Implemented contract evidence; recovery ceremony and custody approval remain externally gated. |
+| AC-04 | Manager | An active manager mints one token to an active identity using nonzero unique asset and metadata commitments. | A non-manager/inactive manager, inactive recipient, duplicate asset ID, or missing commitment reverts. | ERC-721 ownership/state assertions, `AssetMintedAndAllocated`, and negative tests. | Implemented local/CI contract evidence. |
+| AC-05 | Manager | An active manager moves an active asset to an active recipient through a controlled transfer path. | Owner-only, standard approval, inherited transfer bypass, inactive endpoint, paused state, or non-active asset path reverts. | Transfer, malicious receiver, safe-overload, status, and pause tests. | Implemented local/CI contract evidence. |
+| AC-06 | Manager | The manager sets an active asset to a permitted next lifecycle state and configures a bounded per-requester/action rule. | Illegal lifecycle transition, past expiry, inactive requester, missing action, or absent asset is rejected. | State/event assertions for `AssetStatusChanged` and `AccessRuleSet`. | Implemented local/CI contract evidence. |
+| AC-07 | User | An active user requests access to an active asset and receives an emitted non-reverting allow/deny decision under the explicit rule or bounded fallback policy. | An inactive user, paused contract, retired/revoked/suspended asset, missing action, expired rule, or explicit denial cannot produce a grant. | `AccessDecision` event and contract negative/lifecycle tests. | Implemented contract decision evidence; no off-chain content release occurs. |
+| AC-08 | Auditor | A verified principal requests the sanitized audit projection with a bounded limit and status filter. | Missing/unverified authentication, unavailable reader, malformed status, or unconfigured contract/database fails closed; raw logs/payloads/keys/plaintext are never returned. | API route tests, response-redaction assertions, and database adapter integration test. | Implemented route mechanics with test principal injection; real authentication remains externally gated. |
+| AC-09 | Manager/API caller | An authenticated principal records a typed intent with a valid idempotency key; identical retry returns the same record. | Missing/invalid key, invalid schema, conflicting reuse, unconfigured durable writer, or no contract configuration is rejected. | API and SQLAlchemy transaction tests; response includes `on_chain_submission=false`. | Implemented intent recording only; no signing/submission/confirmation authority exists. |
+| AC-10 | Indexer operator | A known ABI log is decoded, raw and derived records/checkpoints are persisted atomically, and only configured confirmation rules promote an event. | Unknown/malformed/wrong-contract ABI log aborts the transaction; reorg-affected output becomes uncertain rather than silently canonical. | Strict ABI fixtures, atomic scanner tests, reorg/reconciliation tests, and disposable PostgreSQL integration. | Implemented one-shot/reference evidence; worker scheduling, approved RPC, and network finality are externally gated. |
+| AC-11 | Verifier | An independent verifier will reproduce selected owner/lifecycle/event/commitment findings from approved chain, ABI, token, and commitment inputs without browser cache or projection trust. | Missing approved network, ABI/deployment input, or verifier evidence must produce an explicit unavailable/gated result—not a fabricated claim. | Verifier CLI/page fixtures, independent-path tests, and walkthrough. | **Blocked:** implementation and approved network/deployment inputs remain required. |
+| AC-12 | Storage policy caller | Declared public metadata or encrypted asset ciphertext passes the bounded classification gate; AES-GCM envelope integrity is checked and key-release policy returns only non-secret metadata. | Sensitive/unknown class, oversized payload, undeclared plaintext ciphertext, inactive requester, stale/denied evidence, or non-active key is rejected. | Storage unit tests and data-placement/redaction review. | Implemented reference policy only; no KMS/HSM, object store, malware/DLP, or real data. |
+| AC-13 | Incident operator | An active default administrator pauses and later unpauses the contract; affected state-changing operations are blocked while paused. | An unprivileged/inactive caller cannot invoke emergency control, and no pause is inferred from a projection alone. | Contract pause tests and `EmergencyStateChanged`/Pausable event evidence. | Implemented contract evidence; real incident roles/runbooks/custody remain externally gated. |
+| AC-14 | Release owner | The selected local release suite, source/reference/Markdown checks, static analysis, contract tests, service tests, build, and evidence review pass before a controlled push. | A failing, skipped-required, stale, fabricated, or missing artifact blocks the release. | Signed-off release-gate record and reproducible command output. | Required before the next GitHub push. |
+| AC-15 | Non-author reviewer | A legitimate eligible non-author reviews protected pull requests and records a real decision before merge. | Author self-approval, automation-only approval, bypass, missing reviewer, or unavailable reviewer leaves merge gated. | GitHub protected-PR evidence. | **Blocked external organizational action; not reproducible by local code.** |
+
+## Cross-cutting security and data criteria
+
+| ID | Criterion | Acceptance evidence | Boundary that remains |
 |---|---|---|---|
-| AC-01 | An administrator identity is active | The administrator registers a new subject with a non-zero DID hash | The subject is stored with an active lifecycle state, receives `USER_ROLE`, and emits `IdentityRegistered` |
-| AC-02 | A subject is not registered or is inactive | Any role-controlled operation is attempted | The transaction reverts and no state change is committed |
-| AC-03 | An administrator deactivates a subject | The subject previously holds user or privileged roles | The subject is inactive and privileged roles are revoked |
-| AC-04 | A caller lacks the required role | The caller attempts to mint, grant, revoke, pause, or unpause | The transaction reverts |
-
-## Asset lifecycle
-
-| ID | Given | When | Then |
-|---|---|---|---|
-| AC-05 | A manager and recipient are active and non-zero asset and metadata hashes exist | The manager mints and allocates an asset | A unique ERC-721 token is created, the organizational asset ID is reserved, and `AssetMintedAndAllocated` is emitted |
-| AC-06 | A non-manager, inactive manager, or duplicate asset ID is supplied | The mint operation is submitted | The transaction reverts and no token is created or registered |
-| AC-07 | A recipient is inactive | A manager attempts allocation or transfer to that recipient | The transaction reverts |
-| AC-08 | A manager transfers to an active recipient | The policy-aware transfer is submitted | Ownership changes once and the standard ERC-721 transfer event is emitted; an owner alone cannot transfer |
-| AC-09 | An approval is requested, a non-manager calls an inherited transfer path, or an owner is inactive | The approval or transfer is attempted | The transaction reverts because standard approvals are disabled and controlled transfers are manager-only |
-| AC-10 | An asset is suspended, revoked, or retired | Access or transfer is requested | The asset remains auditable, but access is denied and every ownership-changing path is blocked; only an approved lifecycle transition can restore an asset from suspension |
-| AC-11 | A manager configures a requester/action rule | The requester submits an access decision before expiry | The rule’s explicit allow or deny overrides the bounded fallback policy and `AccessRuleSet` plus `AccessDecision` events are emitted |
-
-## Audit and verification
-
-| ID | Given | When | Then |
-|---|---|---|---|
-| AC-12 | An identity, key replacement, role, mint, allocation, transfer, access decision, pause, status, or access-rule operation commits | The event consumer processes the transaction | The dedicated structured event is indexed idempotently with transaction hash, block, actor, and confirmation status |
-| AC-13 | A transaction reverts | The API reports operation status | The operation is reported as failed or reverted; no committed-event record claims success |
-| AC-14 | An auditor verifies an asset | The auditor has the network, contract, ABI, token ID, organizational asset ID, and metadata hash | The auditor can reproduce owner, lifecycle events, access decisions, and integrity reference independently of the UI |
-
-## Security and operations
-
-| ID | Given | When | Then |
-|---|---|---|---|
-| AC-15 | The contract is paused | A state-changing identity, role, mint, transfer, asset-status, or access-rule operation is attempted | The operation is blocked until an authorized active administrator unpauses it |
-| AC-16 | An off-chain asset is uploaded | The payload is stored | The payload is encrypted with an AES-256 data key before IPFS/object storage, the key is controlled separately, and only an approved CID/content reference is recorded on-chain |
-| AC-17 | A dependency or workflow changes | A pull request is opened | CI, dependency review, ownership review, and security checks run before merge |
-| AC-18 | A deployment or employee offboarding/recovery is proposed | The release or lifecycle gate is evaluated | Contract review, key custody, network governance, privacy/legal review, recovery, asset review/reassignment, monitoring, and incident evidence are linked |
+| AC-16 | No private key, token secret, raw credential, plaintext sensitive record, KMS key, or regulated payload enters a contract event, API response, browser storage, test fixture, committed file, or ordinary application log. | Data dictionary review, secret scanning, redaction tests, and manual release review. | Does not prove a future KMS/production logging program. |
+| AC-17 | The contract remains canonical; projections, API responses, intents, client state, and reconciliation findings cannot authorize, overwrite, or claim a confirmed chain action. | Authorization/unit tests, status assertions, and architectural review. | Fresh canonical-read policy for production routes remains pending. |
+| AC-18 | All required project sources remain mapped in the ledger and are used only within approved license/security boundaries. | `pnpm validate:references`, ledger review, license notices, and no-submodule/no-unapproved-integration checks. | Does not grant a third-party license or vendor approval. |
+| AC-19 | API, indexer, storage, contract, and environment changes follow a migration note with schema/event version, redaction, compatibility, backfill, failure, and evidence treatment. | Completed [migration note](FINAL-PROJECT-MIGRATION-NOTES-TEMPLATE.md) for each affected release change. | Does not replace external change approval or a production rehearsal. |
+| AC-20 | The web console, when imported into the repository, is keyboard-operable, has visible failure/stale/gated states, preserves the authority boundary, and passes its documented type/build/E2E/axe/i18n evidence. | `apps/web/` test/build artifacts and user-journey evidence. | **Blocked:** repository-native client and verifier implementation remain required. |
 
 ## Evidence package
 
-A complete MVP demonstration should include the contract source, compilation output, passing unit/negative tests, deployment configuration for a disposable network, sample transaction hashes, event/indexer output, a sanitized verification walkthrough, and a statement of limitations. Do not include private keys, real identity records, or unapproved BEL data.
+The final-project evidence package contains the contract source and ABI, passing unit/negative/property/fuzz evidence, service and persistence tests, migration/reconciliation evidence, strict indexer fixtures, sanitized API walkthrough, storage-boundary tests, source ledger, architecture/decision/data documentation, generated SBOM/security artifacts where configured, and the final release-gate record. It must clearly flag disabled external-gated scenarios and must not include private keys, real identity records, unapproved BEL data, fictitious reviewer approvals, or a production-ready claim.
 
 ## References
 
