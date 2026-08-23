@@ -18,6 +18,7 @@
     "validate:markdown": "python3 scripts/validate_markdown_tables.py",
     "validate:deployment-policy": "python3 scripts/validate_deployment_policy.py",
     "validate:deployment-manifest": "python3 scripts/validate_deployment_manifest.py",
+    "validate:indexer-abi": "node scripts/validate_indexer_abi.mjs",
     "test:config": "PYTHONPATH=. python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
     "lint": "hardhat build && tsc --noEmit",
     "test": "hardhat test",

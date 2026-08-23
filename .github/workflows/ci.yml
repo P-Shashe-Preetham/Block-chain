@@ -106,6 +106,10 @@ jobs:
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm build
 
+      - name: Validate canonical indexer ABI
+        if: ${{ hashFiles('package.json') != '' && hashFiles('services/indexer/abi.py') != '' }}
+        run: pnpm validate:indexer-abi
+
       - name: Validate YAML and JSON configuration
         run: |
           if command -v ruby >/dev/null 2>&1; then
