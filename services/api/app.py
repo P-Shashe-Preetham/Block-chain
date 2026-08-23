@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from .audit import AuditReader, AuditReaderUnavailable, ProjectionStatus, UnconfiguredAuditReader
 from .auth import Principal, require_principal
 from .intents import (
+    SQLAlchemyTransactionIntentWriter,
     TransactionIntentRequest,
     TransactionIntentWriter,
     TransactionIntentWriterUnavailable,
@@ -32,6 +33,39 @@ def load_settings() -> Settings:
     return Settings.from_env()
 
 
+def _default_persistence_adapters(
+    settings: Settings,
+) -> tuple[AuditReader, TransactionIntentWriter]:
+    """Build lazy durable adapters only for an explicit database and contract.
+
+    This intentionally does not connect at application construction time, authenticate
+    callers, submit transactions, or make the projection canonical. Without both
+    settings, routes retain their unconfigured fail-closed behavior.
+    """
+    if not settings.database_url or not settings.contract_address:
+        return UnconfiguredAuditReader(), UnconfiguredTransactionIntentWriter()
+
+    from services.persistence.audit_reader import SQLAlchemyAuditReader
+    from services.persistence.database import DatabaseSettings, create_session_factory
+    from services.persistence.repository import create_or_get_transaction_intent
+
+    session_factory = create_session_factory(
+        DatabaseSettings(
+            app_env=settings.app_env,
+            database_url=settings.database_url,
+            database_ssl_mode=settings.database_ssl_mode,
+        )
+    )
+    return (
+        SQLAlchemyAuditReader(
+            session_factory,
+            chain_id=settings.chain_id,
+            contract_address=settings.contract_address,
+        ),
+        SQLAlchemyTransactionIntentWriter(session_factory, create_or_get_transaction_intent),
+    )
+
+
 def create_app(
     app_settings: Settings | None = None,
     *,
@@ -41,8 +75,9 @@ def create_app(
 ) -> FastAPI:
     """Build an app with explicit settings and injected non-authoritative readers."""
     selected_settings = app_settings or load_settings()
-    selected_audit_reader = audit_reader or UnconfiguredAuditReader()
-    selected_transaction_writer = transaction_intent_writer or UnconfiguredTransactionIntentWriter()
+    default_audit_reader, default_transaction_writer = _default_persistence_adapters(selected_settings)
+    selected_audit_reader = audit_reader or default_audit_reader
+    selected_transaction_writer = transaction_intent_writer or default_transaction_writer
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):

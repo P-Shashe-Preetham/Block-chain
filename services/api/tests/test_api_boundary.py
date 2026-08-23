@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 from datetime import datetime, timezone
 from unittest.mock import patch
@@ -15,6 +17,8 @@ from services.api.intents import TransactionIntentRequest, TransactionIntentResu
 from services.api.transactions import TransactionStatus
 from services.api.config import ConfigurationError, Settings
 from services.api.rpc import verify_rpc_contract
+from services.persistence.database import DatabaseSettings, create_database_engine
+from services.persistence.models import Base
 
 
 app = create_app(
@@ -193,6 +197,46 @@ class ApiBoundaryTests(unittest.TestCase):
 
         response = request("GET", "/v1/audit")
         self.assertEqual(response.status_code, 401)
+
+    def test_configured_database_wires_lazy_durable_adapters_without_chain_submission(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_url = f"sqlite+pysqlite:///{Path(directory) / 'projection.sqlite3'}"
+            Base.metadata.create_all(
+                create_database_engine(
+                    DatabaseSettings("local", database_url, "disable")
+                )
+            )
+            settings = Settings(
+                app_env="local",
+                auth_issuer=None,
+                auth_audience=None,
+                auth_jwks_url=None,
+                chain_id=31337,
+                rpc_url="http://127.0.0.1:8545",
+                contract_address="0x" + "1" * 40,
+                cors_allowed_origins=("http://localhost:3000",),
+                database_url=database_url,
+                database_ssl_mode="disable",
+            )
+            principal = Principal("subject-fixture", frozenset({"MANAGER_ROLE"}), frozenset(), "fixture", "fixture")
+            application = create_app(settings, principal_provider=lambda _: principal)
+            headers = {
+                "Authorization": "Bearer fixture-token",
+                "Idempotency-Key": "database-request-001",
+                "Content-Type": "application/json",
+            }
+            body = {"operation": "register_asset", "arguments": {"asset_id": "prototype-1"}}
+
+            created = request_for(application, "POST", "/v1/transaction-intents", headers, body)
+            repeated = request_for(application, "POST", "/v1/transaction-intents", headers, body)
+            audit = request_for(application, "GET", "/v1/audit", {"Authorization": "Bearer fixture-token"})
+
+        self.assertEqual(created.status_code, 200)
+        self.assertEqual(repeated.status_code, 200)
+        self.assertEqual(created.json()["intent_id"], repeated.json()["intent_id"])
+        self.assertFalse(created.json()["on_chain_submission"])
+        self.assertEqual(audit.status_code, 200)
+        self.assertEqual(audit.json(), {"projection_only": True, "events": []})
 
     def test_bearer_auth_fails_closed_until_oidc_is_configured(self) -> None:
         response = request("GET", "/v1/audit", {"Authorization": "Bearer opaque-test-token"})
