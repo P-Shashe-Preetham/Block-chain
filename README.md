@@ -156,7 +156,7 @@ A verifier reads contract state and events, confirms the token and organizationa
 ```text
 .
 ├── apps/
-│   └── web/                  # Next.js web console
+│   └── web/                  # Vite + React web console (introduced when final-project client migration begins)
 ├── contracts/                # Solidity contracts, tests, scripts, deployments
 ├── services/
 │   ├── api/                  # FastAPI application
@@ -193,7 +193,7 @@ This prototype is maintained through reviewed pull requests, scheduled dependenc
 
 ## Project status
 
-The project is in an **active final-project execution phase**: the Solidity/Hardhat contract baseline, fail-closed API, PostgreSQL-oriented persistence, indexer, storage reference boundaries, and an evaluation-facing Evidence Ledger console are implemented. An approved identity provider, network/custody decision, persistent worker deployment, KMS/HSM custody, production storage adapter, independent verifier release evidence, and independent assurance remain gated work. This label does not claim production readiness, controlled-testnet approval, independent audit, legal approval, or BEL endorsement. The maintained roadmap is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md), with the current execution, source-adoption, governance, and no-push procedures in [`docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md`](docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md), [`docs/PROJECT-ENGINEERING-DEFAULTS.md`](docs/PROJECT-ENGINEERING-DEFAULTS.md), [`docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md`](docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md), and [`docs/FINAL-RELEASE-GATE.md`](docs/FINAL-RELEASE-GATE.md).
+The project is in an **active final-project execution phase**: the Solidity/Hardhat contract baseline, fail-closed API, PostgreSQL-oriented persistence, indexer, storage reference boundaries, and an evaluation-facing Evidence Ledger console are implemented. An approved identity provider, network/custody decision, persistent worker deployment, KMS/HSM custody, production storage adapter, independent verifier release evidence, and independent assurance remain gated work. This label does not claim production readiness, controlled-testnet approval, independent audit, legal approval, or BEL endorsement. The maintained roadmap is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md), with the current execution, source-adoption, governance, decision, and no-push procedures in [`docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md`](docs/FINAL-PROJECT-EXECUTION-PLAN-V2.md), [`docs/PROJECT-ENGINEERING-DEFAULTS.md`](docs/PROJECT-ENGINEERING-DEFAULTS.md), [`docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md`](docs/FINAL-PROJECT-GOVERNANCE-BASELINE.md), [`docs/FINAL-PROJECT-DECISION-REGISTER.md`](docs/FINAL-PROJECT-DECISION-REGISTER.md), [`docs/FINAL-RELEASE-GATE.md`](docs/FINAL-RELEASE-GATE.md), and [`docs/ADR/0009-react-vite-web-console-boundary.md`](docs/ADR/0009-react-vite-web-console-boundary.md).
 
 ## Contributing and support
 
