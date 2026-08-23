@@ -18,8 +18,20 @@ class DatabaseSettingsTests(unittest.TestCase):
     def test_non_local_postgresql_requires_secure_ssl_mode(self) -> None:
         with self.assertRaises(DatabaseConfigurationError):
             create_database_engine(DatabaseSettings("pilot", "postgresql+psycopg://user:pass@db.example/app", "disable"))
-        with self.assertRaises(DatabaseConfigurationError):
-            create_database_engine(DatabaseSettings("pilot", "postgresql+psycopg://user:pass@db.example/app", "require"))
+        engine = create_database_engine(DatabaseSettings("pilot", "postgresql+psycopg://user:pass@db.example/app", "require"))
+        self.assertEqual(engine.dialect.name, "postgresql")
+
+    def test_pinned_postgresql_driver_constructs_lazily_without_network_access(self) -> None:
+        engine = create_database_engine(
+            DatabaseSettings(
+                "development",
+                "postgresql+psycopg://user:pass@db.example/app",
+                "require",
+            )
+        )
+        self.assertEqual(engine.dialect.name, "postgresql")
+        self.assertEqual(engine.url.drivername, "postgresql+psycopg")
+        self.assertTrue(engine.hide_parameters)
 
     def test_invalid_scheme_and_missing_url_fail_closed(self) -> None:
         with self.assertRaises(DatabaseConfigurationError):

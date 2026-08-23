@@ -18,6 +18,20 @@ jobs:
     name: Lint, test, and build
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5
+        env:
+          POSTGRES_USER: platform_test
+          POSTGRES_PASSWORD: ci-only-platform-test
+          POSTGRES_DB: platform_projection_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U platform_test -d platform_projection_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
     env:
       NODE_ENV: test
       APP_ENV: ci
@@ -25,6 +39,7 @@ jobs:
       RPC_URL: http://127.0.0.1:8545
       SESSION_SECRET: ci-only-not-for-production
       CORS_ALLOWED_ORIGINS: http://localhost:3000
+      DATABASE_URL: postgresql+psycopg://platform_test:ci-only-platform-test@127.0.0.1:5432/platform_projection_test?sslmode=disable
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -54,6 +69,16 @@ jobs:
       - name: Install Python persistence dependencies
         if: ${{ hashFiles('services/persistence/requirements.lock') != '' }}
         run: python -m pip install --require-hashes --requirement services/persistence/requirements.lock
+
+      - name: Upgrade disposable PostgreSQL schema
+        if: ${{ hashFiles('services/persistence/alembic.ini') != '' && hashFiles('services/persistence/alembic/versions/*.py') != '' }}
+        run: python -m alembic -c services/persistence/alembic.ini upgrade head
+
+      - name: Run genuine PostgreSQL persistence integration tests
+        if: ${{ hashFiles('scripts/tests/test_persistence_postgres.py') != '' }}
+        env:
+          PERSISTENCE_POSTGRES_INTEGRATION: "1"
+        run: PYTHONPATH=. python -m unittest scripts.tests.test_persistence_postgres -v
 
       - name: Set up Node.js
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
