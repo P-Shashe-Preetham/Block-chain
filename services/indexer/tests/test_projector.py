@@ -67,11 +67,18 @@ class ProjectionTests(unittest.TestCase):
         projection.ingest(event(3, tx="0xtx-3"))
         self.assertEqual(projection.rollback_from(2), 2)
         self.assertEqual(projection.last_processed_block, 1)
+        self.assertEqual(tuple(item.key.transaction_hash for item in projection.uncertain_events), ("0xtx-2", "0xtx-3"))
         replacement = event(2, tx="0xreplacement", block_hash="0xnew-block-2")
         projection.checkpoint(2, "0xnew-block-2")
         self.assertTrue(projection.ingest(replacement))
         self.assertEqual(projection.last_processed_block, 2)
         self.assertEqual(projection.events, (event(1), replacement))
+        self.assertEqual(len(projection.uncertain_events), 2)
+
+        projection.rollback_from(2)
+        projection.checkpoint(2, "0xnew-block-2")
+        self.assertTrue(projection.ingest(replacement))
+        self.assertEqual(tuple(item.key.transaction_hash for item in projection.uncertain_events), ("0xtx-2", "0xtx-3"))
 
 
 if __name__ == "__main__":

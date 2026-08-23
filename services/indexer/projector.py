@@ -41,6 +41,7 @@ class InMemoryProjection:
 
     def __init__(self) -> None:
         self._events: dict[EventKey, CanonicalEvent] = {}
+        self._uncertain_events: dict[EventKey, CanonicalEvent] = {}
         self._blocks: dict[int, str] = {}
         self._last_processed_block: int | None = None
 
@@ -51,6 +52,11 @@ class InMemoryProjection:
     @property
     def events(self) -> tuple[CanonicalEvent, ...]:
         return tuple(sorted(self._events.values(), key=lambda event: (event.block_number, event.key.log_index)))
+
+    @property
+    def uncertain_events(self) -> tuple[CanonicalEvent, ...]:
+        """Return reorg-affected events withheld from canonical projection output."""
+        return tuple(sorted(self._uncertain_events.values(), key=lambda event: (event.block_number, event.key.log_index)))
 
     def checkpoint(self, block_number: int, block_hash: str, *, allow_gap: bool = False) -> bool:
         """Record a scanned canonical block, including blocks with no events."""
@@ -77,6 +83,11 @@ class InMemoryProjection:
             if known != event:
                 raise ProjectionConflict("event identity was reused for different event content")
             return False
+        uncertain = self._uncertain_events.get(event.key)
+        if uncertain:
+            if uncertain != event:
+                raise ProjectionConflict("replayed event identity has different content")
+            del self._uncertain_events[event.key]
         known_block_hash = self._blocks.get(event.block_number)
         if known_block_hash and known_block_hash != event.block_hash:
             raise ProjectionConflict("event block hash disagrees with the canonical checkpoint")
@@ -88,7 +99,7 @@ class InMemoryProjection:
             raise ValueError("rollback block must be non-negative")
         removed = [key for key, event in self._events.items() if event.block_number >= block_number]
         for key in removed:
-            del self._events[key]
+            self._uncertain_events[key] = self._events.pop(key)
         for number in [number for number in self._blocks if number >= block_number]:
             del self._blocks[number]
         self._last_processed_block = max(self._blocks, default=None)
