@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-This document defines the default architecture for an MVP platform that combines decentralized identity references, role-based access control (RBAC), NFT-backed digital-asset ownership, and an auditable event trail. It is a design baseline, not a final deployment specification. The target audience is Bharat Electronics Limited's technical and cybersecurity stakeholders, but the document does not assert institutional ownership, endorsement, or production approval.
+This document defines the evolving architecture for the final-project execution of a platform that combines decentralized identity references, role-based access control (RBAC), NFT-backed digital-asset ownership, and an auditable event trail. It is an evidence-gated design baseline, not a final deployment specification or production approval. The target audience is Bharat Electronics Limited's technical and cybersecurity stakeholders, but the document does not assert institutional ownership, endorsement, authorization, or deployment approval. The maintained execution plan is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md), and the complete supplied-source ledger is [`docs/reference-ledger.md`](docs/reference-ledger.md).
 
 The design follows a **canonical ledger plus recoverable projections** model. Smart contracts own the authoritative state transitions for roles, token ownership, and approved references. APIs, databases, indexes, queues, and object storage improve usability and query performance but must be rebuildable from approved source data.
 
@@ -205,7 +205,7 @@ The MVP decisions are: Solidity/Hardhat/OpenZeppelin, local EVM, ECDSA/secp256k1
 
 ## Curated reference inputs
 
-The 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger repositories are cataloged in [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md), mapped to adoption decisions in [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md), and bounded by [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). The current architecture adopts OpenZeppelin as a runtime dependency and treats the other repositories as patterns or reference-only inputs until separately approved.
+The 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger repositories are cataloged in [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md), mapped to original adoption decisions in [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md), and bounded by [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). The complete 96-source utilization ledger is [`docs/reference-ledger.md`](docs/reference-ledger.md). The current architecture adopts OpenZeppelin as a runtime dependency and treats the other repositories and expanded tooling references as patterns, comparisons, local-test candidates, or future-gated inputs until separately approved under ADR 0008.
 
 ## References
 
