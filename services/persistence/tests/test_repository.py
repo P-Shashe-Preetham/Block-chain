@@ -7,12 +7,14 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from services.api.transactions import TransactionConflict
+from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
 from services.persistence.models import Base, BlockCheckpoint, CanonicalEventRecord
 from services.persistence.repository import (
     PersistenceConflict,
     create_or_get_transaction_intent,
     insert_canonical_event,
+    insert_raw_chain_log,
     mark_events_uncertain_from,
     remove_checkpoints_from,
     record_block_checkpoint,
@@ -68,6 +70,24 @@ class PersistenceRepositoryTests(unittest.TestCase):
             self.assertIs(first, retry)
             with self.assertRaises(PersistenceConflict):
                 insert_canonical_event(session, canonical_event(payload=(("assetId", "2"),)), observed_at=NOW)
+
+    def test_raw_log_retry_returns_existing_and_conflict_fails(self) -> None:
+        event = canonical_event()
+        raw = RawChainLog(1, event.block_hash, event.key.transaction_hash, event.key.log_index, event.key.contract_address, ("0x" + "a" * 64,), "0x")
+        with Session(self.engine) as session:
+            first = insert_raw_chain_log(session, event, raw, observed_at=NOW)
+            retry = insert_raw_chain_log(session, event, raw, observed_at=NOW)
+            self.assertIs(first, retry)
+            conflicting = RawChainLog(1, event.block_hash, event.key.transaction_hash, event.key.log_index, event.key.contract_address, ("0x" + "b" * 64,), "0x")
+            with self.assertRaises(PersistenceConflict):
+                insert_raw_chain_log(session, event, conflicting, observed_at=NOW)
+
+    def test_raw_log_must_match_event_identity(self) -> None:
+        event = canonical_event()
+        raw = RawChainLog(1, event.block_hash, "0x" + "9" * 64, event.key.log_index, event.key.contract_address, (), "0x")
+        with Session(self.engine) as session:
+            with self.assertRaises(PersistenceConflict):
+                insert_raw_chain_log(session, event, raw, observed_at=NOW)
 
     def test_event_projection_status_is_closed(self) -> None:
         with Session(self.engine) as session:
