@@ -35,6 +35,7 @@ class PersistenceMigrationTests(unittest.TestCase):
             "alembic_version",
             "transaction_intents",
             "canonical_events",
+            "raw_chain_logs",
             "block_checkpoints",
             "reconciliation_findings",
         }.issubset(tables))

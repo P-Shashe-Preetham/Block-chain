@@ -15,8 +15,9 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from services.api.transactions import TransactionConflict
+from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
-from .models import BlockCheckpoint, CanonicalEventRecord, TransactionIntent
+from .models import BlockCheckpoint, CanonicalEventRecord, RawChainLogRecord, TransactionIntent
 
 
 class PersistenceConflict(ValueError):
@@ -66,6 +67,59 @@ def create_or_get_transaction_intent(
     session.add(intent)
     session.flush()
     return intent
+
+
+def insert_raw_chain_log(
+    session: Session,
+    event: CanonicalEvent,
+    raw_log: RawChainLog,
+    *,
+    observed_at: datetime | None = None,
+) -> RawChainLogRecord:
+    """Persist the exact decoded log input once for later integrity review."""
+    if not isinstance(event, CanonicalEvent) or not isinstance(raw_log, RawChainLog):
+        raise ValueError("event and raw_log are required")
+    _validate_event_key(event.key)
+    if (
+        raw_log.block_number != event.block_number
+        or raw_log.block_hash != event.block_hash
+        or raw_log.transaction_hash.lower() != event.key.transaction_hash.lower()
+        or raw_log.log_index != event.key.log_index
+        or raw_log.address.lower() != event.key.contract_address.lower()
+    ):
+        raise PersistenceConflict("raw log does not match canonical event identity")
+    event_id = _event_id(event.key)
+    topics_json = json.dumps(list(raw_log.topics), separators=(",", ":"))
+    data_hex = raw_log.data.lower()
+    existing = session.get(RawChainLogRecord, event_id)
+    if existing:
+        if any((
+            existing.chain_id != event.key.chain_id,
+            existing.contract_address != event.key.contract_address.lower(),
+            existing.transaction_hash != event.key.transaction_hash.lower(),
+            existing.log_index != event.key.log_index,
+            existing.block_number != raw_log.block_number,
+            existing.block_hash != raw_log.block_hash,
+            existing.topics_json != topics_json,
+            existing.data_hex != data_hex,
+        )):
+            raise PersistenceConflict("raw chain-log identity was reused for different content")
+        return existing
+    record = RawChainLogRecord(
+        event_id=event_id,
+        chain_id=event.key.chain_id,
+        contract_address=event.key.contract_address.lower(),
+        transaction_hash=event.key.transaction_hash.lower(),
+        log_index=event.key.log_index,
+        block_number=raw_log.block_number,
+        block_hash=raw_log.block_hash,
+        topics_json=topics_json,
+        data_hex=data_hex,
+        observed_at=observed_at or datetime.now(timezone.utc),
+    )
+    session.add(record)
+    session.flush()
+    return record
 
 
 def insert_canonical_event(

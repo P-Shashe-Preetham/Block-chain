@@ -3,6 +3,7 @@ import unittest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from services.indexer.consumer import RawChainLog
 from services.indexer.persistent import PersistentProjection
 from services.indexer.projector import CanonicalEvent, EventKey
 from services.persistence.models import Base, CanonicalEventRecord
@@ -23,6 +24,10 @@ def event(block: int = 10, tx: str = "2") -> CanonicalEvent:
     )
 
 
+def raw_log(block: int = 10, tx: str = "2") -> RawChainLog:
+    return RawChainLog(block, "0x" + "3" * 64, "0x" + tx * 64, 0, CONTRACT, ("0x" + "aa" * 32,), "0x")
+
+
 class PersistentProjectionTests(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_engine("sqlite+pysqlite:///:memory:")
@@ -32,7 +37,7 @@ class PersistentProjectionTests(unittest.TestCase):
         with Session(self.engine) as session:
             projection = PersistentProjection(session, chain_id=CHAIN_ID, contract_address=CONTRACT, confirmations=2)
             projection.checkpoint(10, "0x" + "3" * 64, head_block=10)
-            record = projection.ingest(event(), head_block=10)
+            record = projection.ingest(event(), raw_log=raw_log(), head_block=10)
             self.assertEqual(record.projection_status, "unfinalized")
             projection.checkpoint(12, "0x" + "5" * 64, head_block=12)
             self.assertEqual(record.projection_status, "canonical")
@@ -42,7 +47,7 @@ class PersistentProjectionTests(unittest.TestCase):
             projection = PersistentProjection(session, chain_id=CHAIN_ID, contract_address=CONTRACT, confirmations=1)
             projection.checkpoint(10, "0x" + "3" * 64, head_block=11)
             original = event()
-            projection.ingest(original, head_block=11)
+            projection.ingest(original, raw_log=raw_log(), head_block=11)
             self.assertEqual(projection.rollback_from(10), 1)
             record = session.scalar(select(CanonicalEventRecord))
             self.assertEqual(record.projection_status, "uncertain")
@@ -53,7 +58,7 @@ class PersistentProjectionTests(unittest.TestCase):
         with Session(self.engine) as session:
             projection = PersistentProjection(session, chain_id=CHAIN_ID, contract_address=CONTRACT, confirmations=1)
             with self.assertRaises(PersistenceConflict):
-                projection.ingest(CanonicalEvent(EventKey(CHAIN_ID + 1, CONTRACT, "0x" + "2" * 64, 0), 1, "0x" + "3" * 64, "Other", ()), head_block=2)
+                projection.ingest(CanonicalEvent(EventKey(CHAIN_ID + 1, CONTRACT, "0x" + "2" * 64, 0), 1, "0x" + "3" * 64, "Other", ()), raw_log=raw_log(block=1), head_block=2)
             with self.assertRaises(PersistenceConflict):
                 projection.restore_replayed(CanonicalEvent(EventKey(CHAIN_ID, "0x" + "9" * 40, "0x" + "2" * 64, 0), 1, "0x" + "3" * 64, "Other", ()))
 

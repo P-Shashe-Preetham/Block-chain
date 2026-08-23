@@ -52,6 +52,21 @@ class CanonicalEventRecord(Base):
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class RawChainLogRecord(Base):
+    __tablename__ = "raw_chain_logs"
+
+    event_id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    chain_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    contract_address: Mapped[str] = mapped_column(String(42), nullable=False)
+    transaction_hash: Mapped[str] = mapped_column(String(66), nullable=False)
+    log_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    block_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    block_hash: Mapped[str] = mapped_column(String(66), nullable=False)
+    topics_json: Mapped[str] = mapped_column(Text, nullable=False)
+    data_hex: Mapped[str] = mapped_column(Text, nullable=False)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class BlockCheckpoint(Base):
     __tablename__ = "block_checkpoints"
 

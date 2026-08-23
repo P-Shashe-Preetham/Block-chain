@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from services.persistence.repository import (
     PersistenceConflict,
     insert_canonical_event,
+    insert_raw_chain_log,
     mark_events_uncertain_from,
     record_block_checkpoint,
     remove_checkpoints_from,
@@ -19,6 +20,7 @@ from services.persistence.repository import (
     finalize_events_through,
 )
 
+from .consumer import RawChainLog
 from .projector import CanonicalEvent
 
 
@@ -51,10 +53,13 @@ class PersistentProjection:
                 finalized_through=finalized_through,
             )
 
-    def ingest(self, event: CanonicalEvent, *, head_block: int):
+    def ingest(self, event: CanonicalEvent, *, raw_log: RawChainLog, head_block: int):
         self._validate_head(head_block)
         if event.key.chain_id != self._chain_id or event.key.contract_address.lower() != self._contract_address:
             raise PersistenceConflict("event is outside the projection scope")
+        if not isinstance(raw_log, RawChainLog):
+            raise ValueError("raw_log is required for persistent projection")
+        insert_raw_chain_log(self._session, event, raw_log)
         finalized = head_block - event.block_number >= self._confirmations
         return insert_canonical_event(
             self._session,
