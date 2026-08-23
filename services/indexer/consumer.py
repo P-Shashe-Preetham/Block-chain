@@ -111,6 +111,51 @@ class JsonRpcClient:
         return block_hash, tuple(_parse_log(log, block_number, block_hash, contract_address) for log in logs)
 
 
+class PersistentConfirmedScanner:
+    """Read-only confirmed scanner that writes only through an explicit SQLAlchemy session."""
+
+    def __init__(self, client: JsonRpcClient, *, chain_id: int, contract_address: str, session: Any, confirmations: int) -> None:
+        from .persistent import PersistentProjection
+
+        self._client = client
+        self._chain_id = chain_id
+        self._contract_address = contract_address
+        self._projection = PersistentProjection(
+            session,
+            chain_id=chain_id,
+            contract_address=contract_address,
+            confirmations=confirmations,
+        )
+        self._confirmations = confirmations
+
+    def scan(self, start_block: int) -> ScanResult:
+        from .abi import decode_secure_asset_log
+
+        if start_block < 0 or self._confirmations < 0:
+            raise ValueError("start block and confirmation depth must be non-negative")
+        head_block = self._client.block_number()
+        confirmed_through = head_block - self._confirmations
+        if confirmed_through < start_block:
+            return ScanResult(head_block, confirmed_through, 0, 0, 0)
+        scanned = 0
+        observed_logs = 0
+        projected_events = 0
+        for block_number in range(start_block, confirmed_through + 1):
+            block_hash, logs = self._client.block_with_logs(block_number, self._contract_address)
+            self._projection.checkpoint(block_number, block_hash, head_block=head_block)
+            scanned += 1
+            observed_logs += len(logs)
+            for log in logs:
+                event = decode_secure_asset_log(
+                    log,
+                    chain_id=self._chain_id,
+                    contract_address=self._contract_address,
+                )
+                self._projection.ingest(event, raw_log=log, head_block=head_block)
+                projected_events += 1
+        return ScanResult(head_block, confirmed_through, scanned, observed_logs, projected_events)
+
+
 class ConfirmedScanner:
     """Scan a confirmed range into the deterministic in-memory reference projection."""
 
