@@ -14,3 +14,5 @@
 - [x] Add project-owned web performance-budget enforcement and preserve accessibility/browser-security evidence.
 - [x] Strengthen safe API/persistence boundaries only where they require no unapproved identity, custody, network, or tenant decision.
 - [x] Prepare evidence-based decision packets for identity, custody, storage/KMS, hosting, operations, legal, assurance, and release authority.
+- [x] Add a provider-neutral staging authorization and evidence runbook for synthetic-only deployment, health, denial, restore, rollback, alerting, and accessibility drills.
+- [ ] Obtain accountable approvals before selecting any provider, creating staging resources, configuring a real identity/chain/KMS/storage service, or treating the template as deployment evidence.
