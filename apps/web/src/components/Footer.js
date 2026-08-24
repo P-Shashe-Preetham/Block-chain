@@ -1,0 +1,5 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { ShieldCheck, Github, ArrowUpRight } from "lucide-react";
+export const Footer = () => {
+    return (_jsx("footer", { className: "app-footer", children: _jsxs("div", { className: "footer-container", children: [_jsxs("div", { style: { display: "flex", alignItems: "center", gap: "0.75rem" }, children: [_jsx(ShieldCheck, { size: 20, color: "#10b981" }), _jsx("span", { style: { fontWeight: 700, color: "var(--text-primary)" }, children: "ALGORAND SECURE PLATFORM \u2022 2026" })] }), _jsx("div", { children: _jsx("span", { children: "Fail-Closed PyTeal Architecture \u2022 AES-256-GCM Vault \u2022 Vite React Web Console" }) }), _jsxs("a", { href: "https://github.com/P-Shashe-Preetham/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management", target: "_blank", rel: "noopener noreferrer", style: { display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--text-secondary)", textDecoration: "none" }, children: [_jsx(Github, { size: 16 }), _jsx("span", { children: "GitHub Repository" }), _jsx(ArrowUpRight, { size: 14 })] })] }) }));
+};
