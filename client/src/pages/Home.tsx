@@ -79,6 +79,76 @@ export default function Home() {
   const [liveDecision, setLiveDecision] = useState<any>(null);
   const [evaluating, setEvaluating] = useState(false);
 
+  const [didInput, setDidInput] = useState("did:secure:alice-001");
+  const [pubKeyInput, setPubKeyInput] = useState("0x" + "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0");
+  const [registeredIdentity, setRegisteredIdentity] = useState<any>(null);
+  const [registering, setRegistering] = useState(false);
+
+  const [assetNameInput, setAssetNameInput] = useState("Confidential Asset #1");
+  const [unitNameInput, setUnitNameInput] = useState("CAS1");
+  const [payloadInput, setPayloadInput] = useState("Quarterly security audit clearance token");
+  const [encryptionKeyInput, setEncryptionKeyInput] = useState("01" + "23456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+  const [mintedAsset, setMintedAsset] = useState<any>(null);
+  const [minting, setMinting] = useState(false);
+
+  const handleRegisterIdentity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegistering(true);
+    try {
+      const res = await fetch("/v1/algorand/identities/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject_did: didInput,
+          public_key: pubKeyInput,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRegisteredIdentity(data);
+        toast.success(`Identity Registered On-Chain!`, {
+          description: `DID: ${data.did} | Hash: ${data.did_hash?.slice(0, 16)}...`,
+        });
+      } else {
+        toast.error(`Registration Failed: ${data.detail}`);
+      }
+    } catch {
+      toast.error("Failed to connect to Identity Registry PyTeal contract");
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const handleMintASAAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMinting(true);
+    try {
+      const res = await fetch("/v1/algorand/assets/mint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          asset_name: assetNameInput,
+          unit_name: unitNameInput,
+          payload_content: payloadInput,
+          encryption_key_hex: encryptionKeyInput,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMintedAsset(data);
+        toast.success(`ASA Digital Asset Minted!`, {
+          description: `Asset ID: #${data.asset_id} | Unit: ${data.unit_name}`,
+        });
+      } else {
+        toast.error(`Minting Failed: ${data.detail}`);
+      }
+    } catch {
+      toast.error("Failed to connect to Asset Vault PyTeal contract");
+    } finally {
+      setMinting(false);
+    }
+  };
+
   useEffect(() => {
     fetch("/healthz")
       .then((res) => res.json())
@@ -367,14 +437,47 @@ export default function Home() {
                 <div className="identity-status-bar"><span><i className="legend-dot emerald" /> ACTIVE = AUTHORIZABLE</span><span><i className="legend-dot clay" /> REVOKED = HISTORIC</span></div>
               </div>
 
-              <div className="identity-record">
-                <div className="record-header"><span>IDENTITY STRUCT / PRIVATE MAPPING</span><span>address → Identity</span></div>
-                <div className="record-field"><span>did</span><strong>did:secure:alice-001</strong></div>
-                <div className="record-field"><span>active</span><strong className="record-active">true</strong></div>
-                <div className="record-field"><span>registeredAt</span><strong>block.timestamp</strong></div>
-                <div className="record-field"><span>revokedAt</span><strong>0</strong></div>
+              <form onSubmit={handleRegisterIdentity} className="identity-record" style={{ marginTop: "1rem" }}>
+                <div className="record-header">
+                  <span>LIVE ON-CHAIN IDENTITY REGISTRATION FORM</span>
+                  <span>identity_registry.teal</span>
+                </div>
+                <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>SUBJECT DID SPECIFICATION</label>
+                  <input
+                    type="text"
+                    required
+                    style={{ background: "rgba(0,0,0,0.5)", border: "1px solid var(--border-color)", padding: "0.4rem 0.6rem", color: "#fff", fontFamily: "var(--font-mono)", fontSize: "0.8rem", borderRadius: "4px" }}
+                    value={didInput}
+                    onChange={(e) => setDidInput(e.target.value)}
+                  />
+                  <label style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", marginTop: "0.4rem" }}>ED25519 PUBLIC KEY</label>
+                  <input
+                    type="text"
+                    required
+                    style={{ background: "rgba(0,0,0,0.5)", border: "1px solid var(--border-color)", padding: "0.4rem 0.6rem", color: "#fff", fontFamily: "var(--font-mono)", fontSize: "0.8rem", borderRadius: "4px" }}
+                    value={pubKeyInput}
+                    onChange={(e) => setPubKeyInput(e.target.value)}
+                  />
+                  <button
+                    type="submit"
+                    disabled={registering}
+                    className="copper-button"
+                    style={{ marginTop: "0.6rem", width: "100%", justifyContent: "center" }}
+                  >
+                    <span>{registering ? "Registering on Algorand..." : "Register DID Identity On-Chain"}</span>
+                    <ArrowUpRight size={14} />
+                  </button>
+                </div>
+                {registeredIdentity && (
+                  <div style={{ padding: "0.75rem", background: "rgba(16, 185, 129, 0.08)", borderTop: "1px solid rgba(16,185,129,0.2)", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}>
+                    <div style={{ color: "#10b981", fontWeight: 700 }}>✅ REGISTERED ON-CHAIN</div>
+                    <div><strong>TxID:</strong> {registeredIdentity.tx_id}</div>
+                    <div><strong>DID Hash:</strong> {registeredIdentity.did_hash?.slice(0, 24)}...</div>
+                  </div>
+                )}
                 <div className="record-note"><CircleDashed size={15} /> DID uniqueness is validated with <code>keccak256(bytes(did))</code>.</div>
-              </div>
+              </form>
 
               <div className="identity-detail-grid">
                 <article className="detail-panel lifecycle-panel">
