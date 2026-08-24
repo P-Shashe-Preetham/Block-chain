@@ -44,3 +44,9 @@ An approved identity/provider or DID profile, network/finality/deployer custody 
 ## Required next action
 
 Do **not** push. Complete the blocking local evidence above, update this record with only observed results, create the final conventional release commit, rerun repository-integrity checks on that exact head, and only then make one controlled push for remote protected checks and legitimate non-author review.
+
+## Delivery exception — user-authorized source push
+
+On 2026-08-24, the user explicitly authorized the agent to proceed using its safest available judgment after being informed that exact-head environment validation and Compose runtime health remained unavailable in this sandbox. This permits **one controlled source push** of the clean feature branch for remote protected checks. It does not convert either incomplete local condition into a pass, waive the required remote checks or non-author review, authorize a merge or branch-protection bypass, or change the submission-ready/non-production maturity boundary.
+
+The pushed branch must retain this exception, the bounded local runbook, and all unresolved identity, network, custody, storage/KMS, legal/privacy, organizational, verifier, and independent-assurance gates. Any subsequent failure returns the work to the owning remediation phase.
