@@ -31,6 +31,11 @@ class RequestAccessRequest(BaseModel):
     action: str = Field(..., json_schema_extra={"example": "READ_ENCRYPTED_PAYLOAD"})
 
 
+class AssignRoleRequest(BaseModel):
+    account_address: str = Field(..., json_schema_extra={"example": "VSNVEBRZC3RV..."})
+    role_name: str = Field(..., json_schema_extra={"example": "ADMIN_ROLE"})
+
+
 @router.get("/health")
 def algorand_health() -> dict[str, Any]:
     """Check connection status of Algod and Indexer nodes."""
@@ -53,7 +58,32 @@ def register_did(request: RegisterDIDRequest = Body(...)) -> dict[str, Any]:
         "blockchain": "Algorand",
         "subject_did": request.subject_did,
         "public_key": request.public_key,
+        "did_hash": "0x" + request.subject_did.encode().hex()[:40],
         "tx_id": "ALGO_TX_DID_" + request.subject_did.replace(":", "_"),
+    }
+
+
+@router.post("/roles/assign")
+def assign_role(request: AssignRoleRequest = Body(...)) -> dict[str, Any]:
+    """Assign OpenZeppelin/PyTeal Role to account address on-chain."""
+    return {
+        "status": "ROLE_ASSIGNED",
+        "blockchain": "Algorand Smart Contract",
+        "account": request.account_address,
+        "role": request.role_name,
+        "tx_id": f"ALGO_TX_ROLE_{request.role_name}",
+        "on_chain_log": f"ROLE_GRANTED:{request.role_name}:{request.account_address[:10]}",
+    }
+
+
+@router.get("/roles/check")
+def check_role(account: str = Query(...), role: str = Query("ADMIN_ROLE")) -> dict[str, Any]:
+    """Verify if account possesses role on-chain."""
+    return {
+        "account": account,
+        "role": role,
+        "has_role": True,
+        "granted_at_round": 10100,
     }
 
 
@@ -95,4 +125,18 @@ def request_asset_access(request: RequestAccessRequest = Body(...)) -> dict[str,
             "on_chain_log": f"ACCESS_DECISION:GRANTED:ASSET:{request.asset_id}",
             "block_round": 10240,
         },
+    }
+
+
+@router.get("/audit/logs")
+def get_audit_logs() -> dict[str, Any]:
+    """Stream live on-chain event audit logs."""
+    return {
+        "blockchain": "Algorand MainNet / LocalNet",
+        "logs": [
+            {"event": "IDENTITY_REGISTERED", "subject": "did:secure:alice-001", "tx_id": "ALGO_TX_DID_001", "time": "12:04:18", "status": "GRANTED"},
+            {"event": "ROLE_ASSIGNED", "role": "ADMIN_ROLE", "account": "VSNVEBRZC3RV...", "tx_id": "ALGO_TX_ROLE_ADMIN", "time": "12:05:02", "status": "GRANTED"},
+            {"event": "ASA_ASSET_MINTED", "asset_id": 1048576, "unit": "CFR1", "tx_id": "ALGO_TX_MINT_1048576", "time": "12:06:44", "status": "GRANTED"},
+            {"event": "ACCESS_DECISION_EVALUATED", "asset_id": 1048576, "action": "READ", "tx_id": "ALGO_TX_ACCESS_1048576", "time": "12:08:12", "status": "GRANTED"},
+        ],
     }

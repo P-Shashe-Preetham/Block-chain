@@ -201,3 +201,6 @@ def create_app(
         }
 
     return api
+
+
+app = create_app()
