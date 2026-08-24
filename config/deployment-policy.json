@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/blockchain-secure-platform/deployment-policy.json",
+  "title": "SecureAssetPlatform deployment policy",
+  "description": "Deployment guardrails. Empty allowedChainIds for non-local environments means an explicit operator-approved network decision is required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["environments"],
+  "properties": {
+    "environments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local", "ci", "development", "testnet", "pilot", "production"],
+      "properties": {
+        "local": {
+          "$ref": "#/$defs/environmentPolicy"
+        },
+        "ci": {
+          "$ref": "#/$defs/environmentPolicy"
+        },
+        "development": {
+          "$ref": "#/$defs/environmentPolicy"
+        },
+        "testnet": {
+          "$ref": "#/$defs/environmentPolicy"
+        },
+        "pilot": {
+          "$ref": "#/$defs/environmentPolicy"
+        },
+        "production": {
+          "$ref": "#/$defs/environmentPolicy"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "environmentPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedChainIds", "requiresExplicitApproval", "allowsDisposableSigner"],
+      "properties": {
+        "allowedChainIds": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 1},
+          "uniqueItems": true
+        },
+        "requiresExplicitApproval": {"type": "boolean"},
+        "allowsDisposableSigner": {"type": "boolean"}
+      }
+    }
+  },
+  "environments": {
+    "local": {
+      "allowedChainIds": [31337],
+      "requiresExplicitApproval": false,
+      "allowsDisposableSigner": true
+    },
+    "ci": {
+      "allowedChainIds": [31337],
+      "requiresExplicitApproval": false,
+      "allowsDisposableSigner": true
+    },
+    "development": {
+      "allowedChainIds": [31337],
+      "requiresExplicitApproval": false,
+      "allowsDisposableSigner": true
+    },
+    "testnet": {
+      "allowedChainIds": [],
+      "requiresExplicitApproval": true,
+      "allowsDisposableSigner": false
+    },
+    "pilot": {
+      "allowedChainIds": [],
+      "requiresExplicitApproval": true,
+      "allowsDisposableSigner": false
+    },
+    "production": {
+      "allowedChainIds": [],
+      "requiresExplicitApproval": true,
+      "allowsDisposableSigner": false
+    }
+  }
+}

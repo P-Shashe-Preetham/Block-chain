@@ -53,6 +53,7 @@ build/
 artifacts/
 cache/
 cache_hardhat/
+crytic-export/
 typechain-types/
 typechain/
 coverage.json

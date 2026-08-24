@@ -1,0 +1,30 @@
+{
+  "name": "@blockchain-secure-platform/web-console",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Repository-native Evidence Ledger console; browser views do not authorize or submit chain transactions.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "tsc -b && vite build",
+    "check": "tsc -b",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.3",
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.62.1",
+    "@vitejs/plugin-react": "5.1.2",
+    "typescript": "5.9.3",
+    "vite": "7.3.5",
+    "vitest": "4.1.11"
+  }
+}

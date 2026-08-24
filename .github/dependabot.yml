@@ -20,7 +20,7 @@ updates:
         dependency-type: development
 
   - package-ecosystem: pip
-    directory: "/"
+    directory: "/services/api"
     schedule:
       interval: weekly
       day: monday
@@ -34,7 +34,21 @@ updates:
       include: "scope"
 
   - package-ecosystem: pip
-    directory: "/services/api"
+    directory: "/services/storage"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:45"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: "build"
+      include: "scope"
+
+  - package-ecosystem: pip
+    directory: "/services/persistence"
     schedule:
       interval: weekly
       day: monday

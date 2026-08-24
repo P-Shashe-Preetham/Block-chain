@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
@@ -21,36 +20,26 @@ jobs:
     timeout-minutes: 25
     services:
       postgres:
-        image: postgres:16
+        image: postgres@sha256:e17e86066e5ef83e0952a9347f5c792b7ece00972e2aa787a6986f471b3dd3d5
         env:
-          POSTGRES_USER: platform
-          POSTGRES_PASSWORD: platform
-          POSTGRES_DB: platform
+          POSTGRES_USER: platform_test
+          POSTGRES_PASSWORD: ci-only-platform-test
+          POSTGRES_DB: platform_projection_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U platform -d platform"
-          --health-interval=10s
+          --health-cmd="pg_isready -U platform_test -d platform_projection_test"
+          --health-interval=5s
           --health-timeout=5s
-          --health-retries=5
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-retries=12
     env:
       NODE_ENV: test
       APP_ENV: ci
       CHAIN_ID: 31337
       RPC_URL: http://127.0.0.1:8545
-      DATABASE_URL: postgresql://platform:platform@localhost:5432/platform
-      REDIS_URL: redis://localhost:6379/0
       SESSION_SECRET: ci-only-not-for-production
       CORS_ALLOWED_ORIGINS: http://localhost:3000
+      DATABASE_URL: postgresql+psycopg://platform_test:ci-only-platform-test@127.0.0.1:5432/platform_projection_test?sslmode=disable
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -62,6 +51,34 @@ jobs:
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 11.21.0
+
+      - name: Set up Python
+        if: ${{ hashFiles('services/api/requirements.txt') != '' || hashFiles('services/api/tests/**/*.py') != '' || hashFiles('services/storage/requirements.txt') != '' || hashFiles('services/storage/tests/**/*.py') != '' || hashFiles('services/persistence/requirements.txt') != '' || hashFiles('services/persistence/tests/**/*.py') != '' }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+
+      - name: Install Python API dependencies
+        if: ${{ hashFiles('services/api/requirements.lock') != '' }}
+        run: python -m pip install --require-hashes --requirement services/api/requirements.lock
+
+      - name: Install Python storage dependencies
+        if: ${{ hashFiles('services/storage/requirements.lock') != '' }}
+        run: python -m pip install --require-hashes --requirement services/storage/requirements.lock
+
+      - name: Install Python persistence dependencies
+        if: ${{ hashFiles('services/persistence/requirements.lock') != '' }}
+        run: python -m pip install --require-hashes --requirement services/persistence/requirements.lock
+
+      - name: Upgrade disposable PostgreSQL schema
+        if: ${{ hashFiles('services/persistence/alembic.ini') != '' && hashFiles('services/persistence/alembic/versions/*.py') != '' }}
+        run: python -m alembic -c services/persistence/alembic.ini upgrade head
+
+      - name: Run genuine PostgreSQL persistence integration tests
+        if: ${{ hashFiles('scripts/tests/test_persistence_postgres.py') != '' }}
+        env:
+          PERSISTENCE_POSTGRES_INTEGRATION: "1"
+        run: PYTHONPATH=. python -m unittest scripts.tests.test_persistence_postgres -v
 
       - name: Set up Node.js
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
@@ -78,6 +95,26 @@ jobs:
         if: ${{ hashFiles('package.json') != '' }}
         run: pnpm validate:references
 
+      - name: Validate environment contract
+        if: ${{ hashFiles('package.json') != '' && hashFiles('config/environment.schema.json') != '' }}
+        run: pnpm validate:environment -- --file .env.example --environment local
+
+      - name: Validate Markdown tables
+        if: ${{ hashFiles('package.json') != '' }}
+        run: pnpm validate:markdown
+
+      - name: Validate local Compose topology
+        if: ${{ hashFiles('docker-compose.yml') != '' }}
+        run: docker compose -f docker-compose.yml config -q
+
+      - name: Validate deployment policy
+        if: ${{ hashFiles('package.json') != '' && hashFiles('config/deployment-policy.json') != '' }}
+        run: pnpm validate:deployment-policy
+
+      - name: Test repository configuration guardrails
+        if: ${{ hashFiles('scripts/tests/**/*.py') != '' }}
+        run: pnpm test:config
+
       - name: Audit dependencies
         if: ${{ hashFiles('package.json') != '' }}
         run: pnpm audit --audit-level=moderate
@@ -90,13 +127,41 @@ jobs:
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm test
 
+      - name: Test independent asset verifier
+        if: ${{ hashFiles('scripts/tests/test_verifier.mjs') != '' }}
+        run: pnpm test:verifier
+
+      - name: Test independent asset verifier against disposable local chain
+        if: ${{ hashFiles('scripts/tests/test_verifier_e2e.mjs') != '' }}
+        run: pnpm test:verifier:e2e
+
+      - name: Check and test web console
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
+        run: |
+          pnpm check:web
+          pnpm test:web
+          pnpm --filter @blockchain-secure-platform/web-console exec playwright install --with-deps chromium
+          pnpm test:web:e2e
+
       - name: Test Python services
-        if: ${{ hashFiles('services/api/tests/**/*.py') != '' || hashFiles('tests/**/*.py') != '' }}
-        run: python -m pytest
+        if: ${{ hashFiles('services/**/*.py') != '' || hashFiles('tests/**/*.py') != '' }}
+        run: pnpm test:services
 
       - name: Build application
         if: ${{ hashFiles('package.json') != '' || hashFiles('pnpm-workspace.yaml') != '' }}
         run: pnpm build
+
+      - name: Build web console
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
+        run: pnpm build:web
+
+      - name: Enforce web bundle budget
+        if: ${{ hashFiles('scripts/check_web_bundle_budget.mjs') != '' }}
+        run: pnpm check:web:bundle
+
+      - name: Validate canonical indexer ABI
+        if: ${{ hashFiles('package.json') != '' && hashFiles('services/indexer/abi.py') != '' }}
+        run: pnpm validate:indexer-abi
 
       - name: Validate YAML and JSON configuration
         run: |

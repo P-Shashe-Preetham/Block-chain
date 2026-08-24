@@ -2,61 +2,36 @@
 
 ## Scope
 
-This matrix maps the supplied Smart India Hackathon 2026 Problem Statement 26125, the attached Bharat Electronics Limited architecture proposal, and the attached **SIH 2026 – Problem Statement 26125: Mistakes, Technical Issues & Solutions** review to repository evidence. It distinguishes a documented design from an implemented, tested, and deployment-ready capability.
+This matrix maps the supplied Smart India Hackathon 2026 Problem Statement 26125, the attached Bharat Electronics Limited architecture proposal, and the attached **SIH 2026 – Problem Statement 26125: Mistakes, Technical Issues & Solutions** review to repository evidence. It distinguishes a project-owned implementation/test from an external approval, real-world assurance, or production claim. The accepted client direction, contract/data authority, and external gates are recorded in [ADR 0009](ADR/0009-react-vite-web-console-boundary.md), the [decision register](FINAL-PROJECT-DECISION-REGISTER.md), and the [data dictionary](FINAL-PROJECT-DATA-DICTIONARY.md).
 
 ## Requirement traceability
 
 | ID | Requirement | Repository evidence | Current status | Completion evidence still required |
 |---|---|---|---|---|
-| PS-01 | Replace centralized identity dependence with decentralized, cryptographically verifiable identity | ECDSA/secp256k1 EVM authentication; blockchain-backed DID hash registry; lifecycle tests | **MVP baseline implemented** | Approved DID method, credential/resolution tests, and identity assurance review |
-| PS-02 | Assign each user a decentralized identifier independent of a centralized authority | `registerIdentity`, `IdentityProfile.didHash`, `replaceIdentityKey` | **Partially implemented** | DID-document/verification-method design and organizational verification authority |
-| PS-03 | Represent unique digital assets as NFTs | ERC-721 `SecureAssetPlatform`; unique token IDs; `mintAndAllocateAsset` | **MVP baseline implemented** | Independent contract review and approved deployment artifact |
-| PS-04 | Link NFTs to identities with verifiable ownership | `AssetMintedAndAllocated`; ERC-721 ownership; independent verification fields | **MVP baseline implemented** | Published ABI, deployment record, and auditor verification tool |
-| PS-05 | Allow only authorized administrators or managers to mint and allocate assets | `MANAGER_ROLE`, active checks, negative mint tests | **MVP baseline implemented** | Multisig/institutional custody, role graph review, and deployment controls |
-| PS-06 | Enforce Admin, Manager, Auditor, and User RBAC | Explicit role constants, default-admin role administration, grant/revoke checks, lifecycle tests | **MVP baseline implemented** | Tenant/asset scope decision, fuzz/invariant tests, and independent review |
-| PS-07 | Enforce permissions automatically through smart contracts | `onlyRole`, `onlyActiveIdentity`, manager-only transfers, disabled approvals, pause state | **MVP baseline implemented** | Fuzz/invariant tests and independent smart-contract review |
-| PS-08 | Record identity, asset, role, permission, and transfer changes immutably | Structured identity, key-replacement, asset, access-decision, pause, ERC-721, and AccessControl events | **Partially implemented** | Event schema, indexer, confirmation/reorg policy, reconciliation, and audit export |
-| PS-09 | Provide transparent ownership, authenticity, permission, and transaction history | Contract state/events; architecture verification flow; acceptance criteria | **Partially implemented** | API/indexer/read model and auditor dashboard |
-| PS-10 | Protect digital and physical asset metadata | Fixed-size metadata hash; architecture requires AES-256 encryption before IPFS/object storage; key-wrapping design | **Partially implemented** | Encryption/storage service, KMS/HSM integration decision, revocation, retention, and availability tests |
-| PS-11 | Prevent unauthorized reassignment and duplicate real-world registration | Unique organizational `assetId` mapping, duplicate rejection, manager-only transfer, approvals disabled | **MVP baseline implemented** | Physical-asset registration system, QR/NFC verification, and recovery/offboarding workflow |
-| PS-12 | Support tamper-evident auditability without exposing sensitive data | Structured events, explicit non-reverting `AccessDecision`, data-minimization rules | **Partially implemented** | Indexer, transaction-status service, privacy review, monitoring, and incident response |
-| PS-13 | Support enterprise network and deployment governance | ADR 0002 selects local EVM for MVP and defers production network choice | **MVP decision recorded** | Approved permissioned network, validator/operator governance, finality, privacy, and residency evidence |
-| PS-14 | Provide user/operator access through client and wallet/identity adapter | EVM wallet boundary and acceptance flows documented; no client implementation | **Not evidenced** | Web/mobile client, wallet protocol, accessibility review, and end-to-end tests |
-| PS-15 | Bind NFT records to physical assets without claiming token ownership is legal title | Architecture requires organizational asset ID and QR/NFC tag; README distinguishes token/physical/legal ownership | **Design complete** | QR/NFC verifier and organizational asset registry |
-| PS-16 | Define employee offboarding and key-loss recovery | `offboardIdentity` and `setIdentityStatus` revoke roles; `replaceIdentityKey` suspends old key and migrates operational roles; threat model and acceptance criteria | **MVP baseline implemented** | HR/identity approval workflow, asset review/reassignment, recovery ceremony, and audit export |
+| PS-01 | Replace centralized identity dependence with decentralized, cryptographically verifiable identity | EVM account control and a unique on-chain opaque DID-hash registry; lifecycle tests. | **Submission-ready foundation** | Approved DID method/resolver/credential profile, assurance mapping, and identity-owner review. |
+| PS-02 | Assign each user a decentralized identifier independent of a centralized authority | `registerIdentity`, `IdentityProfile.didHash`, `identityByDidHash`, `replaceIdentityKey`. | **Partially implemented** | DID document/verification-method design, approved resolver, and organizational verification authority. |
+| PS-03 | Represent unique digital assets as NFTs | ERC-721 `SecureAssetPlatform`; unique token IDs; `mintAndAllocateAsset`. | **Submission-ready foundation** | Independent contract review and approved deployment artifact. |
+| PS-04 | Link NFTs to identities with verifiable ownership | `AssetMintedAndAllocated`, ERC-721 ownership, contract event/ABI schema, data dictionary. | **Partially implemented** | Published approved deployment record and independent verifier tool. |
+| PS-05 | Allow only authorized administrators or managers to mint and allocate assets | `MANAGER_ROLE`, active checks, negative mint tests. | **Submission-ready foundation** | Multisig/institutional custody, role-graph review, and deployment controls. |
+| PS-06 | Enforce Admin, Manager, Auditor, and User RBAC | Explicit role constants, default-admin administration, grant/revoke/lifecycle tests. | **Submission-ready foundation** | Tenant/asset scope decision, expanded fuzzing, independent review, and real identity assurance. |
+| PS-07 | Enforce permissions automatically through smart contracts | `onlyRole`, `onlyActiveIdentity`, manager-only transfers, disabled approvals, pause state. | **Submission-ready foundation** | Independent smart-contract review and approved deployment controls. |
+| PS-08 | Record identity, asset, role, permission, and transfer changes immutably | Structured events, strict ABI decoder, raw-log retention, canonical projection, status/reorg/reconciliation references. | **Partially implemented** | Approved network finality policy, durable scheduled worker, operational backfill/export. |
+| PS-09 | Provide transparent ownership, authenticity, permission, and transaction history | Contract state/events, sanitized audit route, projection schema, Evidence Ledger prototype, acceptance scenarios. | **Partially implemented** | Repository-integrated client and independent verifier workflow. |
+| PS-10 | Protect digital and physical asset metadata | Fixed-size commitment, AES-256-GCM reference envelope, classification/key-release policy, data-placement rules. | **Partially implemented** | Approved KMS/HSM, storage/availability adapter, malware/DLP, retention, privacy/legal, and recovery evidence. |
+| PS-11 | Prevent unauthorized reassignment and duplicate real-world registration | Unique asset-ID mapping, lifecycle gating, manager-only transfer, disabled approvals. | **Submission-ready foundation** | Physical-asset registry, QR/NFC verifier, legal/title and recovery workflow. |
+| PS-12 | Support tamper-evident auditability without exposing sensitive data | Structured events, non-reverting `AccessDecision`, redacted audit API, data dictionary, raw-log exclusion. | **Partially implemented** | Real authentication, operational monitoring/incident response, approved export/privacy review. |
+| PS-13 | Support enterprise network and deployment governance | Final-project decision register preserves local/CI only and blocks network/custody/finality selection. | **Design and release boundary complete** | Approved network, validator/operator governance, finality, privacy, residency, deployer/multisig evidence. |
+| PS-14 | Provide user/operator access through client and wallet/identity adapter | ADR 0009 and repository-native `apps/web/` Vite/React Evidence Ledger console with typed fail-closed audit read, visible unavailable states, no signer, and no browser secret persistence. | **Partially implemented** | Approved identity adapter, live authenticated API evidence, accessibility/E2E/i18n evidence, and verifier UI/CLI. |
+| PS-15 | Bind NFT records to physical assets without claiming token ownership is legal title | Opaque organizational asset commitment; documentation separates token, physical, and legal ownership. | **Design complete** | QR/NFC verifier, organizational asset registry, legal/title process. |
+| PS-16 | Define employee offboarding and key-loss recovery | `offboardIdentity`, `setIdentityStatus`, `replaceIdentityKey`, scenario and threat documents. | **Submission-ready contract foundation** | HR/identity approval workflow, asset review/reassignment, recovery ceremony, and audit export. |
 
-## Attached SIH issue coverage
+## Final-project interpretation
 
-| Issue | Implemented or documented correction | Evidence | Status |
-|---|---|---|---|
-| 1, 19 | ERC-721 ownership boundary enforces active identities; standard approval paths are disabled; transfer is manager-only | `contracts/SecureAssetPlatform.sol`, transfer tests | **Fixed for MVP** |
-| 2 | Owner access is separate from transfer authority; only managers transfer | `transferAsset`, `transferFrom`, `safeTransferFrom` | **Fixed for MVP** |
-| 3, 17, 18 | Explicit structured `AccessDecision`, identity, asset, key, role, pause, and transfer events replace failed-revert logging assumptions | Contract events, `ARCHITECTURE.md`, `docs/THREAT-MODEL.md` | **Fixed for MVP; indexer pending** |
-| 4, 20 | Deactivation/offboarding revokes operational roles; key replacement suspends old identity; asset reassignment remains an explicit manager review | `offboardIdentity`, `setIdentityStatus`, `replaceIdentityKey`, acceptance criteria | **Fixed for MVP; enterprise workflow pending** |
-| 5 | Duplicate registration is rejected; key replacement is separate | `IdentityAlreadyRegistered`, lifecycle test | **Fixed for MVP** |
-| 6 | Documentation calls this a blockchain-backed DID registry/reference, not complete SSI | `ARCHITECTURE.md`, README | **Fixed in claims** |
-| 7 | MVP selects ECDSA/secp256k1; Ed25519 is not claimed as implemented | ADR 0002, architecture | **Fixed in claims** |
-| 8 | Deactivation revokes on-chain authorization; it does not destroy private keys | Contract lifecycle and security docs | **Fixed in claims** |
-| 9, 10, 11, 28, 29 | Architecture requires AES-256 before IPFS, treats CID as a multihash-based content identifier, separates key wrapping, states post-decryption leakage limits, and defers KMS/HSM to production | Architecture, threat model, acceptance criteria | **Fixed in design; storage implementation pending** |
-| 12 | Unique organizational asset ID is required and duplicate IDs revert | `assetIdExists`, mint test | **Fixed for MVP** |
-| 13 | Physical ownership is not inferred from NFT ownership; QR/NFC and organizational registration are required | Architecture, traceability matrix | **Design complete; verifier pending** |
-| 14, 15 | Default admin is not expanded/revoked through ordinary role calls; operational roles are separately granted and tested | Role administration, tests, ADR 0002 | **Fixed for MVP; multisig pending** |
-| 16 | `AUDITOR_ROLE` controls explicit access-decision reads at the contract boundary; dashboard/indexer remains pending | `requestAccess`, tests, acceptance criteria | **Fixed for MVP; dashboard pending** |
-| 21 | Controlled replacement-key workflow exists and old identity is suspended | `replaceIdentityKey`, lifecycle test | **Fixed for MVP; organizational recovery pending** |
-| 22 | Documentation uses controlled/predictable cost language and does not promise zero fees | README, architecture, ADR 0002 | **Fixed in claims** |
-| 23, 24 | MVP commits to local Hardhat EVM, Solidity, OpenZeppelin, and ERC-721; permissioned network/ERC-1155 are future decisions | ADR 0002, roadmap | **Fixed for MVP** |
-| 25 | Repository and contract are labeled prototype/MVP and explicitly not production-audited | README, SECURITY.md, compliance report, contract notice | **Fixed in claims** |
-| 26 | OpenZeppelin `Pausable` emergency controls are implemented and tested | `pause`, `unpause`, test | **Fixed for MVP** |
-| 27 | NFT ownership and access permission are explicitly separate; access decision is non-reverting and role-aware | Architecture, `requestAccess`, `AccessDecision` | **Fixed for MVP; off-chain retrieval policy pending** |
-| 30 | Roadmap prioritizes wallet/DID, RBAC, encrypted storage, ERC-721, controlled access, and structured audit; QR/NFC and multisig are staged later | `ROADMAP.md`, acceptance criteria | **Fixed in scope** |
-
-## Submission interpretation
-
-The repository now provides a **working smart-contract MVP baseline plus traceable architecture, threat-model, acceptance, and governance documentation**. It is suitable for a proposal or controlled local demonstration when accompanied by the stated limitations. It must not be presented as a production deployment, completed security audit, legal ownership system, or BEL-endorsed implementation.
+The repository provides a **submission-ready final-project engineering foundation**: a canonical Solidity baseline; negative, property, fuzz, static-analysis and CI evidence; a fail-closed API/persistence/indexer/storage reference architecture; a repository-native read-only Evidence Ledger console; a complete source ledger; decision/migration/data controls; and final-project acceptance scenarios. This state is suitable for evaluation and controlled disposable demonstrations under the stated limitations. It must not be represented as a production deployment, real identity platform, complete end-to-end frontend, completed independent verifier, legal ownership system, completed security audit, or BEL-endorsed implementation.
 
 ## Acceptance rule
 
-A row may move from **Partially implemented**, **Design complete**, or **Not evidenced** to **Compliant for production** only when the completion evidence is linked from a reviewed pull request, test result, deployment artifact, operational runbook, or approved governance record. Narrative claims alone do not close a requirement.
+A requirement may move to an external operational or production readiness claim only when its required evidence is linked from a reviewed protected pull request, reproducible test/build/deployment artifact, operational runbook/drill, and the actual accountable authority's approval. Narrative claims, local fixture injection, or a green workflow alone do not close an external gate.
 
 ## References
 

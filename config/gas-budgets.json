@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/blockchain-secure-platform/gas-budgets.json",
+  "title": "SecureAssetPlatform preliminary gas budgets",
+  "description": "Regression ceilings for the disposable local MVP only; these are not production capacity guarantees.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "chainId", "contractName", "unit", "budgets"],
+  "properties": {
+    "schemaVersion": {"type": "integer", "const": 1},
+    "chainId": {"type": "integer", "const": 31337},
+    "contractName": {"type": "string", "const": "SecureAssetPlatform"},
+    "unit": {"type": "string", "const": "gas"},
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registerIdentity", "grantRole", "mintAndAllocateAsset", "transferAsset", "pause"],
+      "properties": {
+        "registerIdentity": {"type": "integer", "minimum": 1},
+        "grantRole": {"type": "integer", "minimum": 1},
+        "mintAndAllocateAsset": {"type": "integer", "minimum": 1},
+        "transferAsset": {"type": "integer", "minimum": 1},
+        "pause": {"type": "integer", "minimum": 1}
+      }
+    }
+  },
+  "schemaVersion": 1,
+  "chainId": 31337,
+  "contractName": "SecureAssetPlatform",
+  "unit": "gas",
+  "budgets": {
+    "registerIdentity": 180000,
+    "grantRole": 100000,
+    "mintAndAllocateAsset": 300000,
+    "transferAsset": 120000,
+    "pause": 80000
+  }
+}

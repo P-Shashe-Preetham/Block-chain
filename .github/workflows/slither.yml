@@ -1,0 +1,67 @@
+name: Slither Solidity analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  schedule:
+    - cron: '41 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: slither-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze Solidity contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 11.21.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile Hardhat artifacts
+        run: pnpm build
+
+      - name: Run Slither
+        id: slither
+        uses: crytic/slither-action@4fd765aeef19915d04ddf0be90c2930036a774d8 # v0.4.1
+        with:
+          target: contracts/SecureAssetPlatform.sol
+          solc-version: 0.8.24
+          node-version: 22
+          slither-version: 0.11.4
+          slither-args: --exclude-dependencies --filter-paths 'node_modules|contracts/test' --solc-args '--base-path . --include-path node_modules'
+          ignore-compile: true
+          sarif: slither-results.sarif
+          fail-on: high
+
+      - name: Upload Slither SARIF
+        if: ${{ success() && steps.slither.outputs.sarif != '' }}
+        uses: github/codeql-action/upload-sarif@42947a340483f03ba47bb1a039b2c519aab3df85 # v3
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}

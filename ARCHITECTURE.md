@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-This document defines the default architecture for an MVP platform that combines decentralized identity references, role-based access control (RBAC), NFT-backed digital-asset ownership, and an auditable event trail. It is a design baseline, not a final deployment specification. The target audience is Bharat Electronics Limited's technical and cybersecurity stakeholders, but the document does not assert institutional ownership, endorsement, or production approval.
+This document defines the evolving architecture for the final-project execution of a platform that combines decentralized identity references, role-based access control (RBAC), NFT-backed digital-asset ownership, and an auditable event trail. It is an evidence-gated design baseline, not a final deployment specification or production approval. The target audience is Bharat Electronics Limited's technical and cybersecurity stakeholders, but the document does not assert institutional ownership, endorsement, authorization, or deployment approval. The maintained execution plan is [`docs/FINAL-PROJECT-COMPLETION-PLAN.md`](docs/FINAL-PROJECT-COMPLETION-PLAN.md), and the complete supplied-source ledger is [`docs/reference-ledger.md`](docs/reference-ledger.md).
 
 The design follows a **canonical ledger plus recoverable projections** model. Smart contracts own the authoritative state transitions for roles, token ownership, and approved references. APIs, databases, indexes, queues, and object storage improve usability and query performance but must be rebuildable from approved source data.
 
@@ -76,7 +76,7 @@ flowchart TB
 
 ### Identity reference
 
-The contract stores a stable subject reference and DID hash, using wallet-based ECDSA/secp256k1 authentication for the EVM MVP. It should not store raw identity documents, credentials, biometric data, private contact details, or secrets. This is a blockchain-backed DID registry/reference, not a complete W3C SSI ecosystem. Verification methods, DID-document resolution, rotation, suspension, revocation, and recovery remain explicit lifecycle decisions.
+The contract stores a stable subject reference and a unique DID-hash commitment, using wallet-based ECDSA/secp256k1 authentication for the EVM MVP. The address-to-DID-hash and DID-hash-to-address mappings prevent two active registry entries from claiming the same commitment, but they do not constitute a complete DID method. The contract should not store raw identity documents, credentials, biometric data, private contact details, or secrets. This is a blockchain-backed DID registry/reference, not a complete W3C SSI ecosystem. Verification methods, DID-document resolution, rotation, suspension, revocation, and recovery remain explicit lifecycle decisions.
 
 ### Roles and permissions
 
@@ -84,11 +84,11 @@ The default roles are `ADMIN`, `MANAGER`, `AUDITOR`, and `USER`. The contract sh
 
 ### Asset tokens
 
-Each asset token has a unique token identifier, a unique organizational asset ID such as `BEL-LAB-001`, a metadata hash, an identity reference or owner address, and lifecycle events. The MVP rejects duplicate asset IDs and uses ERC-721 for unique assets; ERC-1155 remains a future option for batches or semi-fungible licenses. Physical ownership is not inferred from token ownership alone: a QR/NFC tag and organizational registration are required for physical-asset verification. The policy separates creation, allocation, access, transfer, and emergency-recovery authority.
+Each asset token has a unique token identifier, a unique organizational asset ID such as `BEL-LAB-001`, a metadata hash, an identity reference or owner address, an explicit operational status, and lifecycle events. The MVP rejects duplicate asset IDs and uses ERC-721 for unique assets; ERC-1155 remains a future option for batches or semi-fungible licenses. Active assets may be accessed or transferred through policy; suspended, revoked, and retired assets remain auditable but are blocked from access and transfer. Physical ownership is not inferred from token ownership alone: a QR/NFC tag and organizational registration are required for physical-asset verification. The policy separates creation, allocation, access, transfer, lifecycle status, and emergency-recovery authority.
 
 ### Events
 
-Events should be stable, documented, and sufficient for rebuilding projections. Representative events include `IdentityRegistered`, `IdentityUpdated`, `IdentityRevoked`, `RoleGranted`, `RoleRevoked`, `AssetMinted`, `AssetAllocated`, `AssetTransferred`, `AssetMetadataUpdated`, and `EmergencyStateChanged`. Event payloads should use identifiers and hashes rather than personal data.
+Events should be stable, documented, and sufficient for rebuilding projections. Representative events include `IdentityRegistered`, `IdentityUpdated`, `IdentityRevoked`, `RoleGranted`, `RoleRevoked`, `AssetMinted`, `AssetAllocated`, `AssetTransferred`, `AssetStatusChanged`, `AssetMetadataUpdated`, and `EmergencyStateChanged`. Event payloads should use identifiers and hashes rather than personal data.
 
 ## Trust boundaries and authorization
 
@@ -118,7 +118,7 @@ Hashing sensitive data is not automatically privacy-preserving if the source can
 
 ## Ownership and access are separate
 
-NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset policy, and approval state. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs.
+NFT ownership identifies the current token owner and provides provenance. It does not by itself grant permission to read, use, download, or administer the underlying asset. The access layer evaluates the requester, active identity, RBAC role, asset status, asset policy, and approval state. Managers can set an auditable per-asset/per-action requester rule with an allow/deny value and optional expiry; absent rules use the bounded MVP fallback for owners, managers, and auditors. The MVP records explicit `AccessDecision` events with `GRANTED` or `DENIED` outcomes without relying on reverted transactions to persist failed-access logs. A future policy service must extend this baseline with tenant scope, delegation, reason codes, policy versions, and revocation workflows.
 
 ## Asset lifecycle
 
@@ -172,7 +172,7 @@ Log the operation identifier, service component, chain/network, contract, transa
 
 ## Deployment boundaries
 
-Local development uses a disposable blockchain network and test accounts. The proposal's Hyperledger Fabric, private Polygon, and other permissioned-EVM options remain network-strategy candidates rather than selected deployments. Testnet deployment requires approved contracts, reproducible scripts, verified artifacts, operator runbooks, and monitoring. Production deployment additionally requires organizational ownership, network and custody approval, independent security review, privacy and legal review, incident response, backup/recovery, and a rollback or emergency procedure that does not assume immutable state can be erased.
+Local development uses a disposable blockchain network and test accounts. The proposal's Hyperledger Fabric, private Polygon, and other permissioned-EVM options remain network-strategy candidates rather than selected deployments. The deployment script enforces the environment policy, rejects non-local environments until an explicit network approval is recorded, verifies the connected chain ID and deployed bytecode, and writes a manifest containing the contract address, chain identity, compiler/optimizer/EVM settings, bytecode hash, ABI hash, source commit, deployer, custody declaration, and timestamp. Testnet deployment requires approved contracts, reproducible scripts, verified artifacts, operator runbooks, and monitoring. Production deployment additionally requires organizational ownership, network and custody approval, independent security review, privacy and legal review, incident response, backup/recovery, and a rollback or emergency procedure that does not assume immutable state can be erased.
 
 ## Repository structure
 
@@ -182,7 +182,7 @@ Local development uses a disposable blockchain network and test accounts. The pr
 ├── contracts/                        # Solidity contracts and deployment scripts
 │   ├── SecureAssetPlatform.sol       # Executable MVP identity/RBAC/NFT baseline
 │   ├── test/                         # Contract behavior and negative tests
-│   └── scripts/                      # Local/testnet operations
+│   └── scripts/                      # Local operations and guarded deployment
 ├── services/api/                     # FastAPI service
 │   ├── app/                          # Routes, services, policies, models
 │   └── tests/                        # API and authorization tests
@@ -205,7 +205,7 @@ The MVP decisions are: Solidity/Hardhat/OpenZeppelin, local EVM, ECDSA/secp256k1
 
 ## Curated reference inputs
 
-The 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger repositories are cataloged in [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md), mapped to adoption decisions in [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md), and bounded by [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). The current architecture adopts OpenZeppelin as a runtime dependency and treats the other repositories as patterns or reference-only inputs until separately approved.
+The 15 supplied SSI, DID, IAM, NFT, encrypted-storage, and permissioned-ledger repositories are cataloged in [`docs/REFERENCED-REPOSITORIES.md`](docs/REFERENCED-REPOSITORIES.md), mapped to original adoption decisions in [`docs/REFERENCE-INTEGRATION.md`](docs/REFERENCE-INTEGRATION.md), and bounded by [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). The complete 96-source utilization ledger is [`docs/reference-ledger.md`](docs/reference-ledger.md). The current architecture adopts OpenZeppelin as a runtime dependency and treats the other repositories and expanded tooling references as patterns, comparisons, local-test candidates, or future-gated inputs until separately approved under ADR 0008.
 
 ## References
 

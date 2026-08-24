@@ -35,11 +35,14 @@ Describe important design decisions, migrations, event-schema changes, compatibi
 List exact commands and results. Include negative authorization tests and reconciliation or migration tests where relevant.
 
 ```text
+pnpm validate:environment -- --file .env.example --environment local
+pnpm validate:references
 pnpm lint
 pnpm test
+pnpm run test:coverage
 pnpm build
-python -m pytest services/api/tests
-# Add targeted contract, indexer, browser, or accessibility commands.
+pnpm test:api
+# Add transaction API, indexer, browser, storage, or accessibility commands only when implemented.
 ```
 
 ## Accessibility review

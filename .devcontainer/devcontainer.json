@@ -46,7 +46,7 @@
     "9000": { "label": "MinIO API", "onAutoForward": "silent" },
     "9001": { "label": "MinIO console", "onAutoForward": "notify" }
   },
-  "postCreateCommand": "corepack enable && pnpm install --frozen-lockfile=false || true && python3 -m venv .venv && . .venv/bin/activate && if [ -f services/api/requirements.txt ]; then pip install -r services/api/requirements.txt; fi",
+  "postCreateCommand": "corepack enable && pnpm install --frozen-lockfile && python3 -m venv .venv",
   "remoteUser": "vscode",
   "containerEnv": {
     "NODE_ENV": "development",
