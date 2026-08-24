@@ -64,7 +64,7 @@ Review `.env` before running anything. Use local-only test accounts and throwawa
 
 ### Install and validate the current MVP
 
-The current implementation is the Solidity/Hardhat contract MVP, a fail-closed FastAPI service boundary with transaction-state and authorization reference primitives, confirmed RPC/indexer projection primitives, AES-GCM envelope primitives, and PostgreSQL-oriented schema primitives. It does not yet include the full transaction API, durable database migrations/projections, managed key custody or storage adapter, or frontend. Do not start undocumented services or install dependencies from missing paths.
+The current implementation includes the Solidity/Hardhat contract baseline, a fail-closed FastAPI service boundary with durable transaction-intent/audit adapters when validated configuration is supplied, confirmed RPC/indexer projection primitives, AES-GCM envelope references, SQLAlchemy/Alembic PostgreSQL schema, a repository-native Vite/React Evidence Ledger console, and a direct-RPC verifier CLI. It does not include signing/submission authority, managed key custody or a production storage adapter, approved live identity/authentication, an approved network deployment, or production operations. Do not start undocumented services or install dependencies from missing paths.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -80,7 +80,11 @@ pnpm build
 pnpm test:services
 pnpm check:web
 pnpm test:web
+pnpm test:web:e2e
 pnpm build:web
+pnpm check:web:bundle
+pnpm test:verifier
+pnpm test:verifier:e2e
 ```
 
 A disposable local deployment can be generated with `pnpm deploy:local`. The script permits only the local/CI chain policy, verifies chain ID and deployed bytecode, and writes a manifest. Validate the generated evidence with `pnpm validate:deployment-manifest -- --file deployments/local.json`. Non-local environments remain blocked until an approved network and custody policy is recorded.
@@ -89,7 +93,7 @@ The contract test suite covers identity lifecycle, RBAC, asset allocation, contr
 
 ### Gated API, indexer, storage, and frontend work
 
-The API records typed intents only and returns a sanitized audit projection only after an approved authentication boundary is configured; it never signs, submits, or confirms chain transactions. `services/indexer` contains strict decoding, confirmed scan, reorganization, and reconciliation references but not a persistent scheduler/worker. `services/storage` contains an AES-GCM envelope, declared classification, and non-secret key-release policy but no object store or KMS. [ADR 0009](docs/ADR/0009-react-vite-web-console-boundary.md) selects a future repository-native Vite/React console. Full workers, storage adapters, real identity integration, client code, verifier, and endpoints must be added only with their corresponding tests and decision gates.
+The API records typed intents only and returns a sanitized audit projection only after an approved authentication boundary is configured; it never signs, submits, or confirms chain transactions. `services/indexer` contains strict decoding, confirmed scan, reorganization, and reconciliation references but not a persistent scheduler/worker. `services/storage` contains an AES-GCM envelope, declared classification, and non-secret key-release policy but no object store or KMS. [ADR 0009](docs/ADR/0009-react-vite-web-console-boundary.md) selects the implemented repository-native Vite/React Evidence Ledger console, which has no signer, browser secret persistence, or authority to change canonical state. The verifier is tested against a disposable Hardhat JSON-RPC deployment only; real identity integration, workers, storage adapters, live authenticated API configuration, approved network deployment, and production endpoints require their corresponding decision gates.
 
 ### Run quality checks
 
@@ -106,10 +110,14 @@ pnpm build
 pnpm test:services
 pnpm check:web
 pnpm test:web
+pnpm test:web:e2e
 pnpm build:web
+pnpm check:web:bundle
+pnpm test:verifier
+pnpm test:verifier:e2e
 ```
 
-Future transaction API, indexer, browser, storage, and accessibility checks must become mandatory CI checks when those components exist. Accessibility validation should combine automation with manual keyboard and screen-reader review.[3]
+The web type/unit/E2E/axe/build/bundle checks and direct-RPC verifier checks are mandatory CI gates. Accessibility validation still requires named manual keyboard, zoom, screen-reader, and cross-browser review before pilot or production use.[3]
 
 ## Representative domain flows
 

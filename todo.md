@@ -13,3 +13,4 @@
 - [x] Add PostgreSQL concurrency and durable replay/reconciliation regression evidence without introducing unapproved workers or queue infrastructure.
 - [x] Add project-owned web performance-budget enforcement and preserve accessibility/browser-security evidence.
 - [x] Strengthen safe API/persistence boundaries only where they require no unapproved identity, custody, network, or tenant decision.
+- [x] Prepare evidence-based decision packets for identity, custody, storage/KMS, hosting, operations, legal, assurance, and release authority.
