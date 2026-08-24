@@ -1,11 +1,11 @@
-/** Evidence Ledger style: editorial ledger rail, evidence-first hierarchy, dark ink/green signal, and explicit authority limits. */
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+/** Evidence Ledger style: editorial ledger rail, evidence-first hierarchy, dark ink/green signal, explicit authority limits, and a minimal fail-closed audit lifecycle. */
+import { useEffect, useMemo, useState } from "react";
 import {
   AuditApiUnavailableError,
   apiBaseUrl,
   listAuditEvents,
   statusLabel,
+  type AuditEvent,
   type ProjectionStatus,
 } from "./lib/api";
 
@@ -18,6 +18,12 @@ const controlRows = [
   ["Web console", "Repository-native", "Audit read only; no signer"],
 ] as const;
 
+interface AuditReadState {
+  data?: AuditEvent[];
+  error?: unknown;
+  isFetching: boolean;
+}
+
 function compactHash(value: string): string {
   return `${value.slice(0, 10)}…${value.slice(-8)}`;
 }
@@ -25,14 +31,22 @@ function compactHash(value: string): string {
 function App() {
   const [section, setSection] = useState<(typeof navigation)[number]>("Evidence overview");
   const [filter, setFilter] = useState<ProjectionStatus | "all">("all");
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [auditRead, setAuditRead] = useState<AuditReadState>({ isFetching: false });
   const baseUrl = useMemo(apiBaseUrl, []);
-  const auditQuery = useQuery({
-    queryKey: ["audit-events", baseUrl, filter],
-    queryFn: () => listAuditEvents(baseUrl, { limit: 25, projectionStatus: filter === "all" ? undefined : filter }),
-    enabled: Boolean(baseUrl),
-  });
-  const unavailableMessage = auditQuery.error instanceof AuditApiUnavailableError
-    ? auditQuery.error.message
+
+  useEffect(() => {
+    if (!baseUrl) return;
+    let cancelled = false;
+    setAuditRead({ isFetching: true });
+    void listAuditEvents(baseUrl, { limit: 25, projectionStatus: filter === "all" ? undefined : filter })
+      .then((data) => { if (!cancelled) setAuditRead({ data, isFetching: false }); })
+      .catch((error: unknown) => { if (!cancelled) setAuditRead({ error, isFetching: false }); });
+    return () => { cancelled = true; };
+  }, [baseUrl, filter, refreshVersion]);
+
+  const unavailableMessage = auditRead.error instanceof AuditApiUnavailableError
+    ? auditRead.error.message
     : "The audit projection is unavailable until a configured backend and approved authentication boundary are present.";
 
   return (
@@ -92,17 +106,17 @@ function App() {
                   </select>
                 </label>
               </div>
-              {auditQuery.isFetching && <p className="notice">Refreshing bounded projection…</p>}
-              {baseUrl && auditQuery.data && (
-                auditQuery.data.length ? <ul className="event-list">{auditQuery.data.map((event) => <li key={event.event_id}>
+              {auditRead.isFetching && <p className="notice">Refreshing bounded projection…</p>}
+              {baseUrl && auditRead.data && (
+                auditRead.data.length ? <ul className="event-list">{auditRead.data.map((event) => <li key={event.event_id}>
                   <span className="event-index">#{event.log_index}</span>
                   <span><strong>{event.event_name}</strong><small>{compactHash(event.transaction_hash)} · block {event.block_number}</small></span>
                   <span className={`status-chip ${event.projection_status}`}>{statusLabel(event.projection_status)}</span>
                 </li>)}</ul> : <p className="empty-state">The configured sanitized projection returned no records for this filter.</p>
               )}
               {!baseUrl && <p className="empty-state">{unavailableMessage}</p>}
-              {baseUrl && auditQuery.isError && <p className="error-state" role="alert">{unavailableMessage}</p>}
-              {baseUrl && <button className="text-action" onClick={() => void auditQuery.refetch()}>Refresh sanitized projection</button>}
+              {baseUrl && Boolean(auditRead.error) && <p className="error-state" role="alert">{unavailableMessage}</p>}
+              {baseUrl && <button className="text-action" onClick={() => setRefreshVersion((version) => version + 1)}>Refresh sanitized projection</button>}
             </article>
 
             <aside className="annotation-stack" aria-label="Trust annotations">

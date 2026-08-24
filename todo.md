@@ -6,3 +6,6 @@
 - [x] Monitor the resulting CI, CodeQL, Slither, Echidna, dependency/supply-chain, and web E2E checks on the pushed commit.
 - [x] Record remote check outcomes and preserve unresolved external identity, network, custody, legal, organizational, and reviewer gates.
 - [ ] Do not merge, self-approve, simulate review, or make testnet/production readiness claims.
+- [x] Inspect the Ponytail repository license, scope, current architecture, and reproducible optimization patterns without vendoring or installing it.
+- [x] Map compatible optimization findings to the source ledger, engineering defaults, and remediation register with explicit non-adoptions for incompatible components.
+- [x] Implement and validate only project-owned, compatible optimization improvements; preserve the canonical contract, FastAPI, PostgreSQL, and fail-closed authority boundaries.
