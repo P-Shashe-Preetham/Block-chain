@@ -15,6 +15,16 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     allowedHosts: [".manus.computer"],
+    proxy: {
+      "/v1": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/healthz": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port: 4173,

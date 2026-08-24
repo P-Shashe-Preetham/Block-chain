@@ -231,6 +231,16 @@ export default defineConfig({
       "localhost",
       "127.0.0.1",
     ],
+    proxy: {
+      "/v1": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/healthz": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],
