@@ -29,6 +29,9 @@ addCheck('web-dependencies', existsSync(resolve(root, 'apps/web/node_modules')),
 const dockerComposeVersion = version('docker', ['compose', 'version'])
 addCheck('docker-compose', dockerComposeVersion !== null, `detected ${dockerComposeVersion ?? 'not found'}; required only for bounded Compose workflows`)
 
+const dockerServerVersion = version('docker', ['version', '--format', '{{.Server.Version}}'])
+addCheck('docker-daemon-access', dockerServerVersion !== null, `detected ${dockerServerVersion ?? 'unavailable'}; use a Docker-authorized account or configure Docker group access before Compose runtime checks`)
+
 const result = {
   purpose: 'Project-owned readiness check inspired by the developer-experience concept of AlgoKit doctor; it does not invoke or require AlgoKit.',
   checks,
