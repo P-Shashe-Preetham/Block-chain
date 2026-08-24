@@ -219,7 +219,7 @@ export default function Home() {
     <div className="site-shell">
       <header className={`site-header ${hasScrolled ? "is-scrolled" : ""}`}>
         <a href="#top" className="brand-lockup" aria-label="Blockchain Secure Platform home">
-          <img src={brandMark} alt="" className="brand-mark" />
+          <img src={brandMark} alt="Brand Mark" className="brand-mark" onError={(e) => { (e.target as HTMLElement).style.display = "none"; }} />
           <span className="brand-ledger-tick" aria-hidden="true" />
           <span className="brand-wordmark">
             <span>BLOCKCHAIN</span>
@@ -419,7 +419,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="site-footer"><div className="footer-brand"><img src={brandMark} alt="" className="brand-mark" /><span>BLOCKCHAIN SECURE PLATFORM</span></div><div className="footer-meta"><span>STATIC FOUNDATION / 2026</span><span>BUILT FOR THE LAYER BENEATH THE APP</span></div><button className="back-top" type="button" onClick={() => scrollToId("top")} aria-label="Back to top"><ArrowUpRight size={15} /></button></footer>
+      <footer className="site-footer"><div className="footer-brand"><img src={brandMark} alt="Brand Mark" className="brand-mark" onError={(e) => { (e.target as HTMLElement).style.display = "none"; }} /><span>BLOCKCHAIN SECURE PLATFORM</span></div><div className="footer-meta"><span>STATIC FOUNDATION / 2026</span><span>BUILT FOR THE LAYER BENEATH THE APP</span></div><button className="back-top" type="button" onClick={() => scrollToId("top")} aria-label="Back to top"><ArrowUpRight size={15} /></button></footer>
 
       {identityDetailOpen && (
         <div className="identity-dialog-backdrop" role="presentation" onMouseDown={() => setIdentityDetailOpen(false)}>
