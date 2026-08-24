@@ -13,6 +13,7 @@ This check covers the repository-native, no-API-configured Evidence Ledger conso
 | Unavailable/error communication | System-Chromium E2E | Pass: with no public API base URL, the audit panel shows an explicit unavailable state and no illustrative chain records. |
 | Browser persistence boundary | System-Chromium E2E | Pass: test observed empty `localStorage` and `sessionStorage`; no token input or secret persistence exists. |
 | Automated WCAG rules | `@axe-core/playwright` on `#main-content` in system Chromium | Pass: no automated axe violations. The prior paper-panel contrast finding was corrected and rerun. |
+| Responsive reflow | System-Chromium E2E at `375×812` and `1280×720` | Pass: the constrained Evidence Ledger heading remains visible and document `scrollWidth` does not exceed `clientWidth` at either viewport. |
 | Responsive/visual smoke | Browser preview at local origin | Pass: ledger rail, readable typography, filter, control gates, and explicit unconfigured state were visually inspected. |
 
 ## Pending or out-of-scope work

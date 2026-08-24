@@ -26,3 +26,16 @@ test("@a11y exposes no automated axe violations in the Evidence Ledger workspace
   const results = await new AxeBuilder({ page }).include("#main-content").analyze();
   expect(results.violations).toEqual([]);
 });
+
+test("reflows the constrained evidence workspace without horizontal overflow on mobile and desktop viewports", async ({ page }) => {
+  for (const viewport of [{ width: 375, height: 812 }, { width: 1280, height: 720 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Review what the projection can prove." })).toBeVisible();
+    const layout = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth);
+  }
+});
