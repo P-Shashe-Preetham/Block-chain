@@ -26,6 +26,7 @@ curl -i http://localhost:8000/readyz
 
 The health request must return a local API status. The readiness request must return HTTP `503` with `contract not configured`; do not suppress or reclassify this expected safeguard. Open `http://localhost:3000` to inspect the Evidence Ledger. The console will show the API audit projection as unavailable until real identity verification and the protected API preconditions are deliberately approved and configured.
 
+<<<<<<< HEAD
 ## Verified Docker evidence and sandbox boundary
 
 On 2026-08-24, the exact consolidation head built all `postgres`, `migrate`, `api`, and `web` images successfully through an authorized Docker daemon after a stale builder-cache recovery. `docker compose config -q` also passed. This is valid image-build and configuration evidence.
@@ -34,6 +35,8 @@ The bounded `docker compose up --wait` run created the disposable network, volum
 
 Use a Docker-authorized account. `pnpm check:local-readiness` now verifies actual Docker daemon access in addition to Compose command availability. On this sandbox, the unprivileged socket is denied while the authorized service account can build images; a normal development host should grant the operator Docker-group or equivalent approved access rather than relying on an interactive privilege escalation.
 
+=======
+>>>>>>> origin/feat/api-fail-closed-auth-baseline
 ## Local data lifecycle
 
 The `postgres_local_data` named volume is disposable development state. It contains no approved production or real identity data. Remove the topology and all local database state with:
@@ -49,8 +52,11 @@ Do not use this command as a production retention, deletion, backup, or legal-ho
 | Observation | Correct action |
 |---|---|
 | `migrate` fails | Stop the topology, inspect sanitized container logs, fix the migration/configuration defect, and rerun from an empty local volume. Do not hand-edit the schema. |
+<<<<<<< HEAD
 | `migrate` remains running or `up --wait` times out | Capture `docker compose ps` and sanitized `docker compose logs`, then tear down the disposable topology. Reproduce on a Docker-capable host with functioning bridge networking before claiming application health. Do not extend timeouts indefinitely or add fictitious database/network configuration. |
 | Docker command is available but daemon access is denied | Use an approved Docker-authorized account or configure the local Docker group; rerun `pnpm check:local-readiness` before Compose checks. |
+=======
+>>>>>>> origin/feat/api-fail-closed-auth-baseline
 | `/readyz` is `503` | Expected until a real approved contract/network is configured; never add a fictitious address just to force readiness. |
 | Audit route is `401`/`503` | Expected with no approved authentication provider or unavailable projection; the UI must keep its explicit unavailable state. |
 | Browser console displays no data | Expected unless a separately approved, authenticated, sanitized audit source is configured. Do not inject mock operational records. |

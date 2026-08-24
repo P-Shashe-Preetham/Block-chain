@@ -24,7 +24,10 @@
     "test:config": "PYTHONPATH=. python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
     "lint": "hardhat build && tsc --noEmit",
     "check:web": "pnpm --filter @blockchain-secure-platform/web-console check",
+<<<<<<< HEAD
     "check:local-readiness": "node scripts/check_local_readiness.mjs",
+=======
+>>>>>>> origin/feat/api-fail-closed-auth-baseline
     "test": "hardhat test",
     "test:api": "PYTHONPATH=. python3 -m unittest discover -s services/api/tests -p 'test_*.py'",
     "test:services": "PYTHONPATH=. python3 -m unittest discover -s services -p 'test_*.py'",

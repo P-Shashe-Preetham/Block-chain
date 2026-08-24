@@ -12,7 +12,10 @@ This document records the remediation applied to the repository's OpenSSF Scorec
 | Excess release token permissions | Moved write permissions from workflow scope to the release job; workflow scope is read-only | `.github/workflows/release.yml` |
 | Runtime release package resolution | Locked semantic-release and plugin versions in `package.json`/`pnpm-lock.yaml`; release uses `pnpm exec semantic-release` | `package.json`, `pnpm-lock.yaml`, `release.yml` |
 | Missing SAST workflow | Added CodeQL analysis for JavaScript/TypeScript on pushes, pull requests, schedule, and manual dispatch | `.github/workflows/codeql.yml` |
+<<<<<<< HEAD
 | Outdated CodeQL action major version | Consolidation updates the SHA-pinned CodeQL `init`, `analyze`, and Scorecard SARIF-upload actions from v3 to v4.37.8, preserving immutable action references. | `.github/workflows/codeql.yml`, `.github/workflows/scorecards.yml` |
+=======
+>>>>>>> origin/feat/api-fail-closed-auth-baseline
 | Missing fuzzing integration | Added a pinned Echidna workflow and expanded stateful invariant harness for administrator, identity, lifecycle, transfer, access-rule, pause, and approval controls, plus a fast-check TypeScript property suite recognized by Scorecard | `.github/workflows/fuzz.yml`, `contracts/test/SecureAssetPlatformEchidna.sol`, `contracts/test/IdentityReference.property.test.ts` |
 | Vulnerable transitive dependencies | Migrated from Hardhat 2 to Hardhat 3, removed the vulnerable ethers v5 dependency path, retained explicit narrow plugins, and kept a moderate-or-higher CI audit gate | `package.json`, `pnpm-lock.yaml`, `hardhat.config.ts`, `.github/workflows/ci.yml` |
 | Missing reference/security validation | Existing reference validator and CI checks remain active alongside the Python service, Markdown-table, and pinned Solidity static-analysis gates | `scripts/validate_references.py`, `scripts/validate_markdown_tables.py`, `.github/workflows/ci.yml`, `.github/workflows/slither.yml` |
@@ -49,7 +52,11 @@ The four currently open Scorecard alerts are not dismissed merely because their 
 
 ## Validation baseline
 
+<<<<<<< HEAD
 The repository must pass `pnpm install --frozen-lockfile`, `pnpm validate:references`, `pnpm validate:environment`, `pnpm validate:markdown`, `pnpm audit --audit-level=moderate`, the hash-locked Python service install, combined API/indexer tests, strict TypeScript lint, Hardhat compilation, the contract test suite, coverage, and configuration parsing. CodeQL, Echidna, Slither, and Scorecard results are produced by GitHub Actions after workflow files are pushed; they cannot be fully reproduced by the local Hardhat test command alone. The consolidation branch remains review-pending; no protected-branch merge bypass is used.
+=======
+The repository must pass `pnpm install --frozen-lockfile`, `pnpm validate:references`, `pnpm validate:environment`, `pnpm validate:markdown`, `pnpm audit --audit-level=moderate`, the hash-locked Python service install, combined API/indexer tests, strict TypeScript lint, Hardhat compilation, the contract test suite, coverage, and configuration parsing. CodeQL, Echidna, Slither, and Scorecard results are produced by GitHub Actions after workflow files are pushed; they cannot be fully reproduced by the local Hardhat test command alone. PR #13 is stacked on PR #11 and remains review-pending; no protected-branch merge bypass is used.
+>>>>>>> origin/feat/api-fail-closed-auth-baseline
 
 ## References
 

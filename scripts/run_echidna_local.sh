@@ -23,5 +23,9 @@ docker run --rm "${network_args[@]}" -v "${repo_root}:/src" -w /src "${image}" s
     --test-limit 1000 \
     --seq-len 20 \
     --crytic-args "--compile-force-framework solc" \
+<<<<<<< HEAD
     --solc-args "--evm-version cancun --base-path . --include-path node_modules"
+=======
+    --solc-args "--base-path . --include-path node_modules"
+>>>>>>> origin/feat/api-fail-closed-auth-baseline
 '
