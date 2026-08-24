@@ -26,6 +26,12 @@ The catalog preserves every canonical URL exactly as supplied. A project may inf
 | 14 | [Heka Identity Platform](https://github.com/hiero-ledger/heka-identity-platform) [14] | SSI wallet and identity platform | Apache-2.0 | DIDComm, AnonCreds, OpenID4VC, SD-JWT-VC, wallet, and verifiable-credential patterns | **Adopt pattern:** future wallet/credential adapter reference; no TypeScript identity platform dependency added |
 | 15 | [WeIdentity](https://github.com/WeBankBlockchain/WeIdentity) [15] | Enterprise identity and credentials | Apache-2.0 indicator at review | Enterprise DID, credential, and blockchain identity governance concepts | **Adopt pattern:** informs enterprise identity governance and recovery boundaries; no code adopted |
 
+## Supplemental developer-tooling assessment
+
+| Tool | License indicator at review | Relevant lesson or capability | Curated adoption decision |
+|---|---|---|---|
+| [AlgoKit CLI](https://github.com/algorandfoundation/algokit-cli) [16] | MIT | Algorand-focused local-network, project template, readiness/doctor, deployment, typed-client, and debugging workflow | **Process-only adoption:** ADR 0010 adopts the project-owned `check:local-readiness` command inspired by the `doctor` workflow. No AlgoKit source, package, LocalNet, Algorand SDK, template, wallet, asset, or network integration is added because the canonical platform is EVM/Hardhat. |
+
 ## Adoption rules
 
 The only current external runtime dependency from this list is **OpenZeppelin Contracts**, already pinned and used by the Solidity MVP. All other repositories remain architecture, workflow, or security references until a separate ADR approves a concrete adapter or dependency.
@@ -49,3 +55,4 @@ Any future adoption must identify the exact files or API boundary, verify the up
 [13]: https://github.com/hkhuang07/asset-management-sawtooth "Hyperledger Sawtooth Asset Management repository"
 [14]: https://github.com/hiero-ledger/heka-identity-platform "Heka Identity Platform repository"
 [15]: https://github.com/WeBankBlockchain/WeIdentity "WeIdentity repository"
+[16]: https://github.com/algorandfoundation/algokit-cli "AlgoKit CLI repository"

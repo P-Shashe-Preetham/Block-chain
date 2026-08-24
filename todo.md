@@ -20,3 +20,5 @@
 - [x] Construct a reviewable linear-history consolidation branch from `main`, preserving eligible repository content and current dependency updates without force-pushing or protected-branch changes.
 - [ ] Push the consolidation branch, verify required remote checks on its exact head, obtain a legitimate non-author approval, and merge only through the protected `main` workflow.
 - [ ] Keep externally controlled Scorecard findings open until repository age/history, genuine approved changesets, historical SAST coverage, or owner-authenticated OpenSSF assessment independently resolves them.
+- [x] Assess AlgoKit against the canonical EVM/Hardhat architecture and adopt only a project-owned local-readiness check inspired by its doctor workflow; do not install or deploy an Algorand stack without a reviewed ADR.
+- [ ] Obtain a named architecture/network/custody/identity owner decision before evaluating any isolated Algorand proof of concept, LocalNet, wallet, SDK, asset, or deployment integration.
