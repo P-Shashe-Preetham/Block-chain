@@ -2,15 +2,15 @@
 
 ## Decision
 
-**Result: NOT ELIGIBLE FOR PUSH.** The available full local assurance suite passed for revision `9dfbce9cab082a064ca2f606608c096a94f82e42`, but the full gate in [FINAL-RELEASE-GATE.md](../FINAL-RELEASE-GATE.md) is not green. This record preserves the user's no-push rule: no source change after `5065c86` has been pushed, and the branch must remain local-only until every selected local gate is objectively satisfied.
+**Result: NOT ELIGIBLE FOR PUSH.** The available full local assurance suite passed for revision `5f6bd2e3da71e3a2329230ff7448da720a059f20`, but the full gate in [FINAL-RELEASE-GATE.md](../FINAL-RELEASE-GATE.md) is not green. This record preserves the user's no-push rule: no source change after `5065c86` has been pushed, and the branch must remain local-only until every selected local gate is objectively satisfied.
 
-The latest archived combined command output has SHA-256 `9d3733f809765c99eb929a2592f2337ae48b6ece9424a90ff11c435627f84911` in the sandbox evidence location. Earlier staged evidence remains separately hashed; no output file is committed and neither contains committed credentials or real identity data.
+The latest archived combined command output has SHA-256 `2772f0fb7375d39149205aebd435da51810e7fa5e53ed53531d3e925bf4adcee` in the sandbox evidence location. Earlier staged evidence remains separately hashed; no output file is committed and neither contains committed credentials or real identity data.
 
 ## Successful local evidence
 
 | Gate family | Observed command/evidence | Result |
 |---|---|---|
-| Worktree before current assurance run | `git status --short --branch` at `9dfbce9` | Clean; local branch was ahead of origin by eleven commits and was not pushed. |
+| Worktree before current assurance run | `git status --short --branch` at `5f6bd2e` | Clean; local branch was ahead of origin by thirteen commits and was not pushed. |
 | Supply chain | `pnpm audit --audit-level=low` | Pass: no known vulnerabilities. |
 | Source controls | `pnpm validate:references` | Pass: 15 original references and 96 ledger records; no submodules or unapproved package integrations. |
 | Documentation controls | `pnpm validate:markdown`; `git diff --check` | Pass. |
@@ -21,7 +21,7 @@ The latest archived combined command output has SHA-256 `9d3733f809765c99eb929a2
 | Services | `pnpm test:services` | Pass: 91 tests. |
 | Indexer | `pnpm validate:indexer-abi` | Pass: 17 compiled event fragments. |
 | Web console | `pnpm check:web`; `pnpm test:web`; `pnpm build:web` | Pass: strict check, 3 boundary tests, static build. |
-| Browser E2E/accessibility | `pnpm test:web:e2e` with local system Chromium | Pass: two critical tests cover keyboard/skip navigation, explicit unavailable state, empty browser storage, rail interaction, and axe analysis with no violations. |
+| Browser E2E/accessibility | `pnpm test:web:e2e` with local system Chromium | Pass: three critical tests cover keyboard/skip navigation, explicit unavailable state, empty browser storage, rail interaction, axe analysis with no violations, and no horizontal overflow at mobile and desktop viewports. |
 | Independent verifier | `pnpm test:verifier` | Pass: 3 direct-RPC verifier unit tests. |
 | Operations structure | `sudo docker compose config -q`; local image inspection | Pass: Compose configuration parses; API/migration/web images built and configured entry points were inspected. |
 | Synthetic durable-state drill | `scripts/drills/postgres_backup_restore_reconcile.sh` against guarded local PostgreSQL | Pass: restored row counts matched for transaction intents, canonical events, raw logs, checkpoints, and reconciliation findings; temporary database/archive removed. |
@@ -33,7 +33,7 @@ The latest archived combined command output has SHA-256 `9d3733f809765c99eb929a2
 | Environment validation | Not rerun on this revision | The sandbox's restricted environment-file guard prevented a fresh `pnpm validate:environment` invocation. Prior evidence is not a replacement for exact-head evidence. | Run the existing environment validator through an approved non-restricted path against the unchanged environment template. |
 | SARIF and remote security publication | Incomplete | Local Slither high-threshold and Echidna campaigns pass, but local SARIF export could not represent two inherited OpenZeppelin findings without locations. Remote CodeQL/SARIF publication cannot be claimed until a controlled push. | Retain local analyzer outputs; wait for protected remote CodeQL/Slither/Echidna results only after the complete local gate is green. |
 | Browser E2E and accessibility | Partially closed | The console now has repository-owned system-Chromium E2E for keyboard navigation, unavailable state, and browser storage plus an axe run with no violations; [the accessibility check](WEB-ACCESSIBILITY-CHECK-2026-08-23.md) records the observed scope. | Complete named screen-reader, zoom/reflow, cross-browser, and future live-workflow accessibility evidence. |
-| Compose runtime health | Sandbox-limited | Docker Compose structure and images passed, but the sandbox kernel lacks bridge `iptables` support. With Docker's iptables disabled, inter-container PostgreSQL traffic cannot complete. | Run `docker compose up --build --wait`, API health/readiness expectations, and teardown in a Docker-capable environment; retain sanitized logs. |
+| Compose runtime health | Sandbox-limited | A fresh `docker compose up --build --wait` rebuilt API/migration/web images and PostgreSQL became healthy, but the migration job repeatedly failed to connect to PostgreSQL on the Docker bridge before the bounded attempt was stopped. The sandbox kernel lacks bridge `iptables` support; disabling Docker iptables prevents the required inter-container traffic. | Run `docker compose up --build --wait`, API health/readiness expectations, and teardown in a Docker-capable environment; retain sanitized logs. |
 | Verifier walkthrough | External input absent | The direct-RPC verifier implementation is tested, but there is no approved network, deployment address/code hash, token, or finality policy. | Approved deployment/finality inputs and a sanitized direct-RPC walkthrough. |
 | Worker/queue/observability | Not enabled by design | No approved worker, queue, or monitoring selection exists. The repository must not simulate one merely to tick the gate. | Owner-approved selection with ADR, failure/retry/removal tests, operational evidence, and runbooks. |
 
