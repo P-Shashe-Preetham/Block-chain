@@ -16,3 +16,7 @@
 - [x] Prepare evidence-based decision packets for identity, custody, storage/KMS, hosting, operations, legal, assurance, and release authority.
 - [x] Add a provider-neutral staging authorization and evidence runbook for synthetic-only deployment, health, denial, restore, rollback, alerting, and accessibility drills.
 - [ ] Obtain accountable approvals before selecting any provider, creating staging resources, configuring a real identity/chain/KMS/storage service, or treating the template as deployment evidence.
+- [x] Inventory all remote branches, open pull requests, protection rules, and code-scanning alerts; classify actionable findings without closing or suppressing evidence prematurely.
+- [x] Construct a reviewable linear-history consolidation branch from `main`, preserving eligible repository content and current dependency updates without force-pushing or protected-branch changes.
+- [ ] Push the consolidation branch, verify required remote checks on its exact head, obtain a legitimate non-author approval, and merge only through the protected `main` workflow.
+- [ ] Keep externally controlled Scorecard findings open until repository age/history, genuine approved changesets, historical SAST coverage, or owner-authenticated OpenSSF assessment independently resolves them.
