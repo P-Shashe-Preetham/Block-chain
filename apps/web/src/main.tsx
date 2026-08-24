@@ -1,11 +1,5 @@
-/** Evidence Ledger entrypoint: minimal browser runtime with no client-side authority, secret storage, or query framework. */
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import "./styles.css";
+import "./index.css";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<App />);
