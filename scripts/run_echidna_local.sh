@@ -23,5 +23,5 @@ docker run --rm "${network_args[@]}" -v "${repo_root}:/src" -w /src "${image}" s
     --test-limit 1000 \
     --seq-len 20 \
     --crytic-args "--compile-force-framework solc" \
-    --solc-args "--base-path . --include-path node_modules"
+    --solc-args "--evm-version cancun --base-path . --include-path node_modules"
 '
