@@ -24,6 +24,7 @@ from .intents import (
     TransactionIntentWriterUnavailable,
     UnconfiguredTransactionIntentWriter,
 )
+from .algorand_routes import router as algorand_router
 from .transactions import TransactionConflict
 from .config import Settings
 from .rpc import verify_rpc_contract
@@ -101,6 +102,8 @@ def create_app(
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Request-ID"],
     )
+
+    api.include_router(algorand_router)
 
     @api.middleware("http")
     async def request_context(request: Request, call_next):

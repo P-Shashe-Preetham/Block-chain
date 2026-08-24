@@ -199,13 +199,19 @@ class ApiBoundaryTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_configured_database_wires_lazy_durable_adapters_without_chain_submission(self) -> None:
+        from services.persistence.audit_reader import SQLAlchemyAuditReader
+        from services.persistence.database import create_session_factory
+        from services.persistence.repository import create_or_get_transaction_intent
+        from services.api.intents import SQLAlchemyTransactionIntentWriter
+
         with TemporaryDirectory() as directory:
             database_url = f"sqlite+pysqlite:///{Path(directory) / 'projection.sqlite3'}"
-            Base.metadata.create_all(
-                create_database_engine(
-                    DatabaseSettings("local", database_url, "disable")
-                )
-            )
+            db_settings = DatabaseSettings("local", database_url, "disable")
+            engine = create_database_engine(db_settings)
+            Base.metadata.create_all(engine)
+            session_factory = create_session_factory(db_settings)
+            audit_reader = SQLAlchemyAuditReader(session_factory, chain_id=31337, contract_address="0x" + "1" * 40)
+            writer = SQLAlchemyTransactionIntentWriter(session_factory, create_or_get_transaction_intent)
             settings = Settings(
                 app_env="local",
                 auth_issuer=None,
@@ -219,7 +225,12 @@ class ApiBoundaryTests(unittest.TestCase):
                 database_ssl_mode="disable",
             )
             principal = Principal("subject-fixture", frozenset({"MANAGER_ROLE"}), frozenset(), "fixture", "fixture")
-            application = create_app(settings, principal_provider=lambda _: principal)
+            application = create_app(
+                settings,
+                audit_reader=audit_reader,
+                transaction_intent_writer=writer,
+                principal_provider=lambda _: principal,
+            )
             headers = {
                 "Authorization": "Bearer fixture-token",
                 "Idempotency-Key": "database-request-001",
@@ -230,6 +241,8 @@ class ApiBoundaryTests(unittest.TestCase):
             created = request_for(application, "POST", "/v1/transaction-intents", headers, body)
             repeated = request_for(application, "POST", "/v1/transaction-intents", headers, body)
             audit = request_for(application, "GET", "/v1/audit", {"Authorization": "Bearer fixture-token"})
+            engine.dispose()
+            session_factory.kw["bind"].dispose()
 
         self.assertEqual(created.status_code, 200)
         self.assertEqual(repeated.status_code, 200)
