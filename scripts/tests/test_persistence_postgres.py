@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from threading import Barrier
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -10,13 +12,17 @@ from sqlalchemy.orm import Session
 from services.indexer.consumer import RawChainLog
 from services.indexer.projector import CanonicalEvent, EventKey
 from services.persistence.database import DatabaseSettings, create_database_engine
-from services.persistence.models import Base, BlockCheckpoint, CanonicalEventRecord, RawChainLogRecord, TransactionIntent
+from services.indexer.reconcile import Drift
+from services.persistence.models import Base, BlockCheckpoint, CanonicalEventRecord, RawChainLogRecord, ReconciliationFinding, TransactionIntent
 from services.persistence.repository import (
     PersistenceConflict,
     create_or_get_transaction_intent,
+    insert_reconciliation_finding,
     insert_canonical_event,
     insert_raw_chain_log,
+    mark_events_uncertain_from,
     record_block_checkpoint,
+    restore_replayed_event,
 )
 
 
@@ -134,6 +140,60 @@ class PostgreSQLPersistenceIntegrationTests(unittest.TestCase):
         with Session(self.engine) as session:
             self.assertEqual(session.query(TransactionIntent).count(), 1)
             self.assertEqual(session.query(CanonicalEventRecord).count(), 1)
+
+    def test_postgresql_concurrent_idempotency_race_returns_one_durable_intent(self) -> None:
+        barrier = Barrier(2)
+
+        def write_intent(intent_id: str) -> str:
+            with Session(self.engine) as session:
+                with session.begin():
+                    barrier.wait(timeout=5)
+                    intent = create_or_get_transaction_intent(
+                        session,
+                        intent_id=intent_id,
+                        subject_key="subject-postgres-race",
+                        idempotency_key="request-postgres-race",
+                        request_fingerprint="c" * 64,
+                    )
+                    return intent.id
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            intent_ids = list(executor.map(write_intent, ("intent-postgres-race-a", "intent-postgres-race-b")))
+
+        self.assertEqual(len(set(intent_ids)), 1)
+        with Session(self.engine) as session:
+            self.assertEqual(session.query(TransactionIntent).count(), 1)
+
+    def test_postgresql_replay_restores_uncertain_event_and_idempotent_finding(self) -> None:
+        event = canonical_event()
+        finding = Drift("asset:replay-1", "owner", "canonical-owner", "projected-owner")
+        with Session(self.engine) as session:
+            with session.begin():
+                insert_canonical_event(session, event, projection_status="unfinalized")
+                record_block_checkpoint(
+                    session,
+                    chain_id=event.key.chain_id,
+                    block_number=event.block_number,
+                    block_hash=event.block_hash,
+                    finalized=False,
+                )
+                self.assertEqual(
+                    mark_events_uncertain_from(
+                        session,
+                        chain_id=event.key.chain_id,
+                        contract_address=event.key.contract_address,
+                        block_number=event.block_number,
+                    ),
+                    1,
+                )
+                self.assertEqual(insert_reconciliation_finding(session, finding).id, insert_reconciliation_finding(session, finding).id)
+                restored = restore_replayed_event(session, event)
+                self.assertEqual(restored.projection_status, "canonical")
+
+        with Session(self.engine) as session:
+            stored = session.get(CanonicalEventRecord, "31337:0x" + "1" * 40 + ":0x" + "2" * 64 + ":0:1")
+            self.assertEqual(stored.projection_status, "canonical")
+            self.assertEqual(session.query(ReconciliationFinding).count(), 1)
 
 
 if __name__ == "__main__":

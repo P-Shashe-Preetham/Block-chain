@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from services.api.transactions import (
@@ -77,9 +78,23 @@ def create_or_get_transaction_intent(
         created_at=timestamp,
         updated_at=timestamp,
     )
-    session.add(intent)
-    session.flush()
-    return intent
+    try:
+        with session.begin_nested():
+            session.add(intent)
+            session.flush()
+        return intent
+    except IntegrityError:
+        existing = session.scalar(
+            select(TransactionIntent).where(
+                TransactionIntent.subject_key == subject_key,
+                TransactionIntent.idempotency_key == idempotency_key,
+            )
+        )
+        if existing is None:
+            raise
+        if existing.request_fingerprint != request_fingerprint:
+            raise TransactionConflict("idempotency key was already used for another request")
+        return existing
 
 
 def transition_transaction_intent(

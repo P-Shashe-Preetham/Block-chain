@@ -20,6 +20,8 @@ The Evidence Ledger had exactly one bounded, fail-closed audit read. The `@tanst
 
 The optimization was checked against the project’s safety boundaries: it did not add a signer, browser secret storage, automatic retry, authentication bypass, mock chain data, or change to canonical authority. Existing web unit tests, browser E2E, axe checks, strict TypeScript, and static build remain required.
 
+The repository also enforces a project-owned production bundle budget after each web build. The gate limits JavaScript to 450 KiB raw and 128 KiB gzip-compressed, and CSS to 16 KiB raw. It is intentionally a lightweight regression guard rather than a claim that a byte-count alone represents browser performance, accessibility, security, or production capacity.
+
 ## Measured result
 
 | Measurement | Before | After | Change |

@@ -13,6 +13,7 @@
   "scripts": {
     "build": "hardhat build",
     "build:web": "pnpm --filter @blockchain-secure-platform/web-console build",
+    "check:web:bundle": "node scripts/check_web_bundle_budget.mjs",
     "deploy:local": "hardhat run contracts/scripts/deploy.ts",
     "validate:references": "python3 scripts/validate_references.py",
     "validate:environment": "python3 scripts/validate_environment.py",
@@ -30,7 +31,8 @@
     "test:web": "pnpm --filter @blockchain-secure-platform/web-console test",
     "test:web:e2e": "pnpm --filter @blockchain-secure-platform/web-console test:e2e",
     "test:echidna": "./scripts/run_echidna_local.sh",
-    "test:verifier": "node --test scripts/tests/test_verifier.mjs"
+    "test:verifier": "node --test scripts/tests/test_verifier.mjs",
+    "test:verifier:e2e": "pnpm build && node --test scripts/tests/test_verifier_e2e.mjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "4.0.15",

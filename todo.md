@@ -9,3 +9,7 @@
 - [x] Inspect the Ponytail repository license, scope, current architecture, and reproducible optimization patterns without vendoring or installing it.
 - [x] Map compatible optimization findings to the source ledger, engineering defaults, and remediation register with explicit non-adoptions for incompatible components.
 - [x] Implement and validate only project-owned, compatible optimization improvements; preserve the canonical contract, FastAPI, PostgreSQL, and fail-closed authority boundaries.
+- [x] Add disposable local-chain end-to-end evidence for the independent verifier, including code-hash mismatch behavior.
+- [x] Add PostgreSQL concurrency and durable replay/reconciliation regression evidence without introducing unapproved workers or queue infrastructure.
+- [x] Add project-owned web performance-budget enforcement and preserve accessibility/browser-security evidence.
+- [x] Strengthen safe API/persistence boundaries only where they require no unapproved identity, custody, network, or tenant decision.

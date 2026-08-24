@@ -131,6 +131,10 @@ jobs:
         if: ${{ hashFiles('scripts/tests/test_verifier.mjs') != '' }}
         run: pnpm test:verifier
 
+      - name: Test independent asset verifier against disposable local chain
+        if: ${{ hashFiles('scripts/tests/test_verifier_e2e.mjs') != '' }}
+        run: pnpm test:verifier:e2e
+
       - name: Check and test web console
         if: ${{ hashFiles('apps/web/package.json') != '' }}
         run: |
@@ -150,6 +154,10 @@ jobs:
       - name: Build web console
         if: ${{ hashFiles('apps/web/package.json') != '' }}
         run: pnpm build:web
+
+      - name: Enforce web bundle budget
+        if: ${{ hashFiles('scripts/check_web_bundle_budget.mjs') != '' }}
+        run: pnpm check:web:bundle
 
       - name: Validate canonical indexer ABI
         if: ${{ hashFiles('package.json') != '' && hashFiles('services/indexer/abi.py') != '' }}
