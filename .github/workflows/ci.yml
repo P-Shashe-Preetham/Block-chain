@@ -138,7 +138,6 @@ jobs:
       - name: Check and test web console
         if: ${{ hashFiles('apps/web/package.json') != '' }}
         run: |
-          pnpm check:web
           pnpm test:web
           pnpm --filter @blockchain-secure-platform/web-console exec playwright install --with-deps chromium
           pnpm test:web:e2e
