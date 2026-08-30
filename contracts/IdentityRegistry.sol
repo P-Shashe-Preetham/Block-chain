@@ -16,7 +16,8 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
     /// @notice Minimal identity state associated with a wallet address.
     struct Identity {
         string did;
-        bool active;
+        bytes32 dataHash;
+        IdentityStatus status;
         uint256 registeredAt;
         uint256 revokedAt;
     }
@@ -30,9 +31,13 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
     error DIDAlreadyExists();
     error IdentityAlreadyRevoked();
     error InvalidAddress();
+    error InvalidStatusTransition();
 
     /** @notice Emitted after a wallet registers its identity. */
-    event IdentityRegistered(address indexed user, bytes32 indexed didHash, string did, uint256 registeredAt);
+    event IdentityRegistered(address indexed user, bytes32 indexed didHash, string did, bytes32 dataHash, uint256 registeredAt);
+    event IdentityVerified(address indexed user);
+    event WalletBound(address indexed oldWallet, address indexed newWallet);
+    event WalletRebound(address indexed oldWallet, address indexed newWallet);
 
     /** @notice Emitted after an administrator revokes an active identity. */
     event IdentityRevoked(address indexed user, uint256 revokedAt);
@@ -48,9 +53,10 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
     /**
      * @notice Registers the caller's wallet with a unique decentralized identifier.
      * @param did The caller-supplied DID. It is stored exactly as supplied and uniqueness is enforced by its hash.
+     * @param dataHash The hash of the off-chain data payload.
      * @dev DIDs cannot be reassigned after revocation in Version 1, preserving an immutable historical record.
      */
-    function registerIdentity(string calldata did) external {
+    function registerIdentity(string calldata did, bytes32 dataHash) external override {
         if (bytes(did).length == 0) revert EmptyDID();
         if (isRegistered(msg.sender)) revert IdentityAlreadyRegistered();
 
@@ -58,24 +64,82 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
         if (didOwners[didHash] != address(0)) revert DIDAlreadyExists();
 
         uint256 registeredAt = block.timestamp;
-        identities[msg.sender] = Identity({did: did, active: true, registeredAt: registeredAt, revokedAt: 0});
+        identities[msg.sender] = Identity({
+            did: did,
+            dataHash: dataHash,
+            status: IdentityStatus.PENDING,
+            registeredAt: registeredAt,
+            revokedAt: 0
+        });
         didOwners[didHash] = msg.sender;
 
-        emit IdentityRegistered(msg.sender, didHash, did, registeredAt);
+        emit IdentityRegistered(msg.sender, didHash, did, dataHash, registeredAt);
+    }
+
+    function verifyIdentity(address user) external override onlyRole(ADMIN_ROLE) {
+        if (!isRegistered(user)) revert IdentityNotRegistered();
+
+        Identity storage identity = identities[user];
+        if (identity.status != IdentityStatus.PENDING) revert InvalidStatusTransition();
+
+        identity.status = IdentityStatus.VERIFIED;
+        emit IdentityVerified(user);
+    }
+
+    function bindWallet(address newWallet) external override {
+        if (!isRegistered(msg.sender)) revert IdentityNotRegistered();
+        if (newWallet == address(0)) revert InvalidAddress();
+        if (isRegistered(newWallet)) revert IdentityAlreadyRegistered();
+
+        Identity storage identity = identities[msg.sender];
+        if (identity.status != IdentityStatus.VERIFIED) revert InvalidStatusTransition();
+
+        identity.status = IdentityStatus.ACTIVE;
+
+        // Move the identity to the new wallet
+        string memory cachedDid = identity.did;
+        identities[newWallet] = identity;
+        delete identities[msg.sender];
+
+        // Update the DID owner mapping
+        bytes32 didHash = keccak256(bytes(cachedDid));
+        didOwners[didHash] = newWallet;
+
+        emit WalletBound(msg.sender, newWallet);
+    }
+
+    function rebindWallet(address newWallet) external override {
+        if (!isRegistered(msg.sender)) revert IdentityNotRegistered();
+        if (newWallet == address(0)) revert InvalidAddress();
+        if (isRegistered(newWallet)) revert IdentityAlreadyRegistered();
+
+        Identity storage identity = identities[msg.sender];
+        if (identity.status != IdentityStatus.ACTIVE) revert InvalidStatusTransition();
+
+        // Move the identity to the new wallet
+        string memory cachedDid = identity.did;
+        identities[newWallet] = identity;
+        delete identities[msg.sender];
+
+        // Update the DID owner mapping
+        bytes32 didHash = keccak256(bytes(cachedDid));
+        didOwners[didHash] = newWallet;
+
+        emit WalletRebound(msg.sender, newWallet);
     }
 
     /**
      * @notice Revokes an active identity while preserving its historical registration record.
      * @param user The wallet whose identity should be revoked.
      */
-    function revokeIdentity(address user) external onlyRole(ADMIN_ROLE) {
+    function revokeIdentity(address user) external override onlyRole(ADMIN_ROLE) {
         if (user == address(0)) revert InvalidAddress();
         if (!isRegistered(user)) revert IdentityNotRegistered();
 
         Identity storage identity = identities[user];
-        if (!identity.active) revert IdentityAlreadyRevoked();
+        if (identity.status == IdentityStatus.REVOKED) revert IdentityAlreadyRevoked();
 
-        identity.active = false;
+        identity.status = IdentityStatus.REVOKED;
         identity.revokedAt = block.timestamp;
 
         emit IdentityRevoked(user, identity.revokedAt);
@@ -94,14 +158,19 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
      * @param user The wallet address to inspect.
      */
     function isIdentityActive(address user) external view override returns (bool) {
-        return isRegistered(user) && identities[user].active;
+        return isRegistered(user) && identities[user].status == IdentityStatus.ACTIVE;
+    }
+
+    function getIdentityStatus(address user) external view override returns (IdentityStatus) {
+        if (!isRegistered(user)) return IdentityStatus.NONE;
+        return identities[user].status;
     }
 
     /**
      * @notice Returns the lifecycle state associated with a registered wallet identity.
      * @param user The wallet address to inspect.
      * @return did The stored decentralized identifier.
-     * @return active Whether the identity remains active.
+     * @return status The lifecycle status of the identity.
      * @return registeredAt The registration timestamp.
      * @return revokedAt The revocation timestamp, or zero when the identity has not been revoked.
      */
@@ -109,12 +178,12 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
         external
         view
         override
-        returns (string memory did, bool active, uint256 registeredAt, uint256 revokedAt)
+        returns (string memory did, IdentityStatus status, uint256 registeredAt, uint256 revokedAt)
     {
         if (!isRegistered(user)) revert IdentityNotRegistered();
 
         Identity storage identity = identities[user];
-        return (identity.did, identity.active, identity.registeredAt, identity.revokedAt);
+        return (identity.did, identity.status, identity.registeredAt, identity.revokedAt);
     }
 
     /**
