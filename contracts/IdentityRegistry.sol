@@ -2,22 +2,23 @@
 pragma solidity ^0.8.24;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IIdentityRegistry} from "./interfaces/IIdentityRegistry.sol";
 
 /**
  * @title IdentityRegistry
- * @notice Stores a minimal, non-sensitive on-chain identity lifecycle for wallet addresses.
- * @dev This contract intentionally does not manage roles, assets, permissions, or access decisions.
+ * @notice Manages decentralized identity lifecycle for Open Banking users.
  */
-contract IdentityRegistry is AccessControl, IIdentityRegistry {
-    /// @notice Role permitted to revoke active identities.
+contract IdentityRegistry is AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant VERIFIER_ROLE = keccak256("VERIFIER_ROLE");
 
-    /// @notice Minimal identity state associated with a wallet address.
+    enum IdentityStatus { PENDING, VERIFIED, ACTIVE, SUSPENDED, REVOKED }
+
     struct Identity {
         string did;
-        bool active;
+        bytes32 piiHash;
+        IdentityStatus status;
         uint256 registeredAt;
+        uint256 verifiedAt;
         uint256 revokedAt;
     }
 
@@ -30,27 +31,24 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
     error DIDAlreadyExists();
     error IdentityAlreadyRevoked();
     error InvalidAddress();
+    error InvalidIdentityStatus();
 
-    /** @notice Emitted after a wallet registers its identity. */
     event IdentityRegistered(address indexed user, bytes32 indexed didHash, string did, uint256 registeredAt);
+    event IdentityVerified(address indexed user, uint256 verifiedAt);
+    event IdentityStatusUpdated(address indexed user, IdentityStatus status, uint256 updatedAt);
+    event WalletBound(address indexed wallet, string did);
+    event WalletRebound(address indexed oldWallet, address indexed newWallet, string did);
 
-    /** @notice Emitted after an administrator revokes an active identity. */
-    event IdentityRevoked(address indexed user, uint256 revokedAt);
-
-    /**
-     * @notice Assigns the deployer the initial default-administrator and identity-administrator roles.
-     */
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(VERIFIER_ROLE, msg.sender);
     }
 
     /**
-     * @notice Registers the caller's wallet with a unique decentralized identifier.
-     * @param did The caller-supplied DID. It is stored exactly as supplied and uniqueness is enforced by its hash.
-     * @dev DIDs cannot be reassigned after revocation in Version 1, preserving an immutable historical record.
+     * @notice Registers a user wallet with a DID and off-chain PII hash. Initial state is PENDING.
      */
-    function registerIdentity(string calldata did) external {
+    function registerIdentity(string calldata did, bytes32 piiHash) external {
         if (bytes(did).length == 0) revert EmptyDID();
         if (isRegistered(msg.sender)) revert IdentityAlreadyRegistered();
 
@@ -58,69 +56,115 @@ contract IdentityRegistry is AccessControl, IIdentityRegistry {
         if (didOwners[didHash] != address(0)) revert DIDAlreadyExists();
 
         uint256 registeredAt = block.timestamp;
-        identities[msg.sender] = Identity({did: did, active: true, registeredAt: registeredAt, revokedAt: 0});
+        identities[msg.sender] = Identity({
+            did: did,
+            piiHash: piiHash,
+            status: IdentityStatus.PENDING,
+            registeredAt: registeredAt,
+            verifiedAt: 0,
+            revokedAt: 0
+        });
         didOwners[didHash] = msg.sender;
 
         emit IdentityRegistered(msg.sender, didHash, did, registeredAt);
+        emit WalletBound(msg.sender, did);
     }
 
     /**
-     * @notice Revokes an active identity while preserving its historical registration record.
-     * @param user The wallet whose identity should be revoked.
+     * @notice Verifies a user identity (by Bank/Verifier/Admin). Transitions from PENDING to VERIFIED, then ACTIVE.
+     */
+    function verifyIdentity(address user) external onlyRole(VERIFIER_ROLE) {
+        if (user == address(0)) revert InvalidAddress();
+        if (!isRegistered(user)) revert IdentityNotRegistered();
+
+        Identity storage identity = identities[user];
+        if (identity.status == IdentityStatus.REVOKED) revert IdentityAlreadyRevoked();
+
+        identity.status = IdentityStatus.ACTIVE;
+        identity.verifiedAt = block.timestamp;
+
+        emit IdentityVerified(user, identity.verifiedAt);
+        emit IdentityStatusUpdated(user, IdentityStatus.ACTIVE, block.timestamp);
+    }
+
+    /**
+     * @notice Revokes an identity.
      */
     function revokeIdentity(address user) external onlyRole(ADMIN_ROLE) {
         if (user == address(0)) revert InvalidAddress();
         if (!isRegistered(user)) revert IdentityNotRegistered();
 
         Identity storage identity = identities[user];
-        if (!identity.active) revert IdentityAlreadyRevoked();
+        if (identity.status == IdentityStatus.REVOKED) revert IdentityAlreadyRevoked();
 
-        identity.active = false;
+        identity.status = IdentityStatus.REVOKED;
         identity.revokedAt = block.timestamp;
 
-        emit IdentityRevoked(user, identity.revokedAt);
+        emit IdentityStatusUpdated(user, IdentityStatus.REVOKED, identity.revokedAt);
     }
 
     /**
-     * @inheritdoc IIdentityRegistry
-     * @dev A revoked identity returns true because it remains registered historically.
+     * @notice Rebinds a DID from an old wallet to a new wallet address.
      */
-    function isRegistered(address user) public view override returns (bool) {
+    function rebindWallet(address oldWallet, address newWallet) external onlyRole(ADMIN_ROLE) {
+        if (oldWallet == address(0) || newWallet == address(0)) revert InvalidAddress();
+        if (!isRegistered(oldWallet)) revert IdentityNotRegistered();
+        if (isRegistered(newWallet)) revert IdentityAlreadyRegistered();
+
+        Identity storage identity = identities[oldWallet];
+        bytes32 didHash = keccak256(bytes(identity.did));
+
+        identities[newWallet] = identity;
+        delete identities[oldWallet];
+        didOwners[didHash] = newWallet;
+
+        emit WalletRebound(oldWallet, newWallet, identity.did);
+    }
+
+    /**
+     * @notice Check if a user is registered.
+     */
+    function isRegistered(address user) public view returns (bool) {
         return identities[user].registeredAt != 0;
     }
 
     /**
-     * @notice Returns true only when a wallet has registered an identity that remains active.
-     * @param user The wallet address to inspect.
+     * @notice Check if a user identity is currently ACTIVE.
      */
-    function isIdentityActive(address user) external view override returns (bool) {
-        return isRegistered(user) && identities[user].active;
+    function isIdentityActive(address user) external view returns (bool) {
+        return isRegistered(user) && (identities[user].status == IdentityStatus.ACTIVE);
     }
 
     /**
-     * @notice Returns the lifecycle state associated with a registered wallet identity.
-     * @param user The wallet address to inspect.
-     * @return did The stored decentralized identifier.
-     * @return active Whether the identity remains active.
-     * @return registeredAt The registration timestamp.
-     * @return revokedAt The revocation timestamp, or zero when the identity has not been revoked.
+     * @notice Get identity status enum.
+     */
+    function getIdentityStatus(address user) external view returns (IdentityStatus) {
+        if (!isRegistered(user)) revert IdentityNotRegistered();
+        return identities[user].status;
+    }
+
+    /**
+     * @notice Get full identity details.
      */
     function getIdentity(address user)
         external
         view
-        override
-        returns (string memory did, bool active, uint256 registeredAt, uint256 revokedAt)
+        returns (
+            string memory did,
+            bytes32 piiHash,
+            IdentityStatus status,
+            uint256 registeredAt,
+            uint256 verifiedAt,
+            uint256 revokedAt
+        )
     {
         if (!isRegistered(user)) revert IdentityNotRegistered();
-
-        Identity storage identity = identities[user];
-        return (identity.did, identity.active, identity.registeredAt, identity.revokedAt);
+        Identity storage id = identities[user];
+        return (id.did, id.piiHash, id.status, id.registeredAt, id.verifiedAt, id.revokedAt);
     }
 
     /**
-     * @notice Resolves a DID to its registered wallet address.
-     * @param did The DID to resolve.
-     * @return The associated wallet address, or address(0) when the DID has never been registered.
+     * @notice Resolve DID to address.
      */
     function getAddressByDID(string calldata did) external view returns (address) {
         return didOwners[keccak256(bytes(did))];
