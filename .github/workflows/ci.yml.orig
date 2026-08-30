@@ -158,7 +158,7 @@ jobs:
 
       - name: Enforce web bundle budget
         if: ${{ hashFiles('scripts/check_web_bundle_budget.mjs') != '' }}
-        run: pnpm check:web:bundle
+        run: :bundle
 
       - name: Validate canonical indexer ABI
         if: ${{ hashFiles('package.json') != '' && hashFiles('services/indexer/abi.py') != '' }}
