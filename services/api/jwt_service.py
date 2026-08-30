@@ -3,6 +3,7 @@ JWT Access Token Service for Open Banking Cryptographic Authorization
 Generates and verifies short-lived JWT authorization tokens after blockchain access evaluation.
 """
 
+import os
 import time
 import base64
 import hmac
@@ -10,7 +11,7 @@ import hashlib
 import json
 from typing import Dict, Any, Optional, Tuple
 
-SECRET_KEY = "open_banking_super_secret_jwt_key_2026"
+SECRET_KEY = os.getenv("JWT_SECRET", "open_banking_dev_jwt_signing_key_change_in_production")
 
 def _base64url_encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')

@@ -49,7 +49,7 @@ contract AuditRegistry is AccessControl {
         string calldata dataType,
         bool granted,
         string calldata reason
-    ) external returns (uint256 recordId) {
+    ) external onlyRole(LOG_LOGGER_ROLE) returns (uint256 recordId) {
         recordId = auditLogs.length;
         uint256 timestamp = block.timestamp;
 

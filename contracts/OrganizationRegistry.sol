@@ -32,6 +32,7 @@ contract OrganizationRegistry is AccessControl {
     error InvalidName();
     error UnauthorizedCaller();
     error OrganizationNotApproved();
+    error InvalidStateTransition();
 
     event OrganizationRegistered(address indexed orgAddress, string name, RoleType role, string licenseId);
     event OrganizationStatusChanged(address indexed orgAddress, OrgStatus status, uint256 updatedAt);
@@ -67,10 +68,13 @@ contract OrganizationRegistry is AccessControl {
     }
 
     /**
-     * @notice REGULATOR approves an organization.
+     * @notice REGULATOR approves an organization (PENDING -> APPROVED or SUSPENDED -> APPROVED).
      */
     function approveOrganization(address orgAddress) external onlyRole(REGULATOR_ROLE) {
         if (organizations[orgAddress].registeredAt == 0) revert OrganizationNotRegistered();
+        OrgStatus current = organizations[orgAddress].status;
+        if (current != OrgStatus.PENDING && current != OrgStatus.SUSPENDED) revert InvalidStateTransition();
+
         organizations[orgAddress].status = OrgStatus.APPROVED;
         organizations[orgAddress].updatedAt = block.timestamp;
 
@@ -78,10 +82,13 @@ contract OrganizationRegistry is AccessControl {
     }
 
     /**
-     * @notice REGULATOR suspends an organization.
+     * @notice REGULATOR suspends an organization (APPROVED -> SUSPENDED).
      */
     function suspendOrganization(address orgAddress) external onlyRole(REGULATOR_ROLE) {
         if (organizations[orgAddress].registeredAt == 0) revert OrganizationNotRegistered();
+        OrgStatus current = organizations[orgAddress].status;
+        if (current != OrgStatus.APPROVED) revert InvalidStateTransition();
+
         organizations[orgAddress].status = OrgStatus.SUSPENDED;
         organizations[orgAddress].updatedAt = block.timestamp;
 
@@ -89,10 +96,13 @@ contract OrganizationRegistry is AccessControl {
     }
 
     /**
-     * @notice REGULATOR revokes an organization.
+     * @notice REGULATOR revokes an organization (APPROVED -> REVOKED or SUSPENDED -> REVOKED).
      */
     function revokeOrganization(address orgAddress) external onlyRole(REGULATOR_ROLE) {
         if (organizations[orgAddress].registeredAt == 0) revert OrganizationNotRegistered();
+        OrgStatus current = organizations[orgAddress].status;
+        if (current != OrgStatus.APPROVED && current != OrgStatus.SUSPENDED) revert InvalidStateTransition();
+
         organizations[orgAddress].status = OrgStatus.REVOKED;
         organizations[orgAddress].updatedAt = block.timestamp;
 

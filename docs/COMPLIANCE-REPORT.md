@@ -18,6 +18,19 @@ The applied fixes include manager-only controlled transfers, disabled standard E
 | **Not evidenced** | The repository does not contain the implementation or evidence needed to claim the capability |
 | **Blocked for production** | A security, privacy, governance, or operational gate must be completed before production use |
 
+## Emergency Audit Remediation Status (30 August 2026)
+
+| Finding ID | Scope / Category | Status | Evidence |
+|---|---|---|---|
+| **P0-002** | Hard-coded JWT Secret Removal | **Compliant for MVP** | `services/api/jwt_service.py` (`os.getenv("JWT_SECRET")`) |
+| **P0-007** | Audit Log Injection Prevention | **Compliant for MVP** | `contracts/AuditRegistry.sol` (`onlyRole(LOG_LOGGER_ROLE)` check + Hardhat test) |
+| **P0-009** | CI & Contract Test Enforcement | **Compliant for MVP** | 24/24 passing Hardhat mocha/solidity test suite |
+| **P0-010** | Action Plan & Governance Restoration | **Compliant for MVP** | `docs/AUDIT-AND-ACTION-PLAN.md` created; `README (1).md` removed |
+| **P1-1** | Indexed Consent Evaluation | **Compliant for MVP** | `contracts/ConsentManager.sol` ($O(1)$ `activeTupleConsentId` key map) |
+| **P1-2** | Constructor Address Validation | **Compliant for MVP** | `contracts/AccessControlManager.sol` (`InvalidAddress` revert check) |
+| **P1-3** | Org Lifecycle Transitions | **Compliant for MVP** | `contracts/OrganizationRegistry.sol` (`InvalidStateTransition` state machine) |
+| **P1-6** | Explicit CORS Policy | **Compliant for MVP** | `services/api/open_banking_app.py` (`allow_origins` environment list) |
+
 ## Documentation deliverables audit
 
 | Deliverable group | Required content | Status | Evidence |

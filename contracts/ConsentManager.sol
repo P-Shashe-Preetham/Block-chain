@@ -21,6 +21,7 @@ contract ConsentManager is AccessControl {
 
     mapping(bytes32 => Consent) private consents;
     mapping(address => bytes32[]) private userConsentIds;
+    mapping(bytes32 => bytes32) private activeTupleConsentId;
 
     error InvalidAddress();
     error InvalidDataType();
@@ -78,6 +79,9 @@ contract ConsentManager is AccessControl {
 
         userConsentIds[msg.sender].push(consentId);
 
+        bytes32 tupleKey = keccak256(abi.encodePacked(msg.sender, bank, tsp, keccak256(bytes(dataType))));
+        activeTupleConsentId[tupleKey] = consentId;
+
         emit ConsentGranted(consentId, msg.sender, bank, tsp, dataType, createdAt, expiresAt);
     }
 
@@ -92,11 +96,16 @@ contract ConsentManager is AccessControl {
 
         consent.active = false;
 
+        bytes32 tupleKey = keccak256(abi.encodePacked(consent.user, consent.bank, consent.tsp, keccak256(bytes(consent.dataType))));
+        if (activeTupleConsentId[tupleKey] == consentId) {
+            delete activeTupleConsentId[tupleKey];
+        }
+
         emit ConsentRevoked(consentId, msg.sender, block.timestamp);
     }
 
     /**
-     * @notice Validates whether an active, non-expired consent exists for the specified tuple.
+     * @notice Validates whether an active, non-expired consent exists for the specified tuple in O(1) time.
      */
     function checkConsent(
         address user,
@@ -104,23 +113,12 @@ contract ConsentManager is AccessControl {
         address tsp,
         string calldata dataType
     ) external view returns (bool) {
-        bytes32[] storage ids = userConsentIds[user];
-        bytes32 dataTypeHash = keccak256(bytes(dataType));
+        bytes32 tupleKey = keccak256(abi.encodePacked(user, bank, tsp, keccak256(bytes(dataType))));
+        bytes32 cid = activeTupleConsentId[tupleKey];
+        if (cid == bytes32(0)) return false;
 
-        for (uint256 i = 0; i < ids.length; i++) {
-            Consent storage c = consents[ids[i]];
-            if (
-                c.active &&
-                c.bank == bank &&
-                c.tsp == tsp &&
-                keccak256(bytes(c.dataType)) == dataTypeHash &&
-                block.timestamp <= c.expiresAt
-            ) {
-                return true;
-            }
-        }
-
-        return false;
+        Consent storage c = consents[cid];
+        return c.active && block.timestamp <= c.expiresAt;
     }
 
     /**

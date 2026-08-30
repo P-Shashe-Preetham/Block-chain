@@ -82,6 +82,26 @@ describe("Open Banking Blockchain Access Control Suite", function () {
       expect(await organizationRegistry.isOrganizationApproved(tsp1.address)).to.be.true;
       expect(await organizationRegistry.isOrganizationApproved(unapprovedTsp.address)).to.be.false;
     });
+
+    it("Should enforce strict state transitions (PENDING -> APPROVED -> SUSPENDED -> APPROVED / REVOKED)", async function () {
+      await organizationRegistry.connect(bankA).registerOrganization("Bank A", 1, "BANK-LIC-001");
+
+      // Cannot suspend from PENDING directly
+      await expect(
+        organizationRegistry.connect(regulator).suspendOrganization(bankA.address)
+      ).to.be.revertedWithCustomError(organizationRegistry, "InvalidStateTransition");
+
+      // Approve: PENDING -> APPROVED
+      await organizationRegistry.connect(regulator).approveOrganization(bankA.address);
+
+      // Suspend: APPROVED -> SUSPENDED
+      await organizationRegistry.connect(regulator).suspendOrganization(bankA.address);
+      expect(await organizationRegistry.isOrganizationApproved(bankA.address)).to.be.false;
+
+      // Re-approve: SUSPENDED -> APPROVED
+      await organizationRegistry.connect(regulator).approveOrganization(bankA.address);
+      expect(await organizationRegistry.isOrganizationApproved(bankA.address)).to.be.true;
+    });
   });
 
   describe("Phase 2: IdentityRegistry", function () {
@@ -129,6 +149,17 @@ describe("Open Banking Blockchain Access Control Suite", function () {
   });
 
   describe("Phase 4: AccessControlManager", function () {
+    it("Should revert deployment if dependency address is zero", async function () {
+      const AccessControlManagerFactory = await ethers.getContractFactory("AccessControlManager");
+      await expect(
+        AccessControlManagerFactory.deploy(
+          ethers.ZeroAddress,
+          await organizationRegistry.getAddress(),
+          await consentManager.getAddress()
+        )
+      ).to.be.revertedWithCustomError(accessControlManager, "InvalidAddress");
+    });
+
     it("Should authorize access only when all requirements pass", async function () {
       const dataType = "TRANSACTIONS";
 
@@ -167,6 +198,35 @@ describe("Open Banking Blockchain Access Control Suite", function () {
         dataType
       );
       expect(isAllowedAfterRevoke).to.be.false;
+    });
+  });
+
+  describe("Phase 5: AuditRegistry Security", function () {
+    it("Should allow LOG_LOGGER_ROLE to log access attempt and revert unauthorized callers", async function () {
+      // Admin has LOG_LOGGER_ROLE by default in constructor
+      await auditRegistry.connect(admin).logAccessAttempt(
+        user1.address,
+        bankA.address,
+        tsp1.address,
+        "TRANSACTIONS",
+        true,
+        "Authorized"
+      );
+
+      expect(await auditRegistry.getAuditLogsCount()).to.equal(1n);
+
+      // Unauthorized caller (user1) attempting logAccessAttempt should revert
+      const LOG_LOGGER_ROLE = await auditRegistry.LOG_LOGGER_ROLE();
+      await expect(
+        auditRegistry.connect(user1).logAccessAttempt(
+          user1.address,
+          bankA.address,
+          tsp1.address,
+          "TRANSACTIONS",
+          false,
+          "Attempt"
+        )
+      ).to.be.revertedWithCustomError(auditRegistry, "AccessControlUnauthorizedAccount").withArgs(user1.address, LOG_LOGGER_ROLE);
     });
   });
 });

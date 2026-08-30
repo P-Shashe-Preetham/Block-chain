@@ -14,6 +14,7 @@ contract AccessControlManager {
     OrganizationRegistry public immutable organizationRegistry;
     ConsentManager public immutable consentManager;
 
+    error InvalidAddress();
     error UserNotVerified();
     error BankNotApproved();
     error TSPNotApproved();
@@ -33,6 +34,9 @@ contract AccessControlManager {
         address _organizationRegistry,
         address _consentManager
     ) {
+        if (_identityRegistry == address(0) || _organizationRegistry == address(0) || _consentManager == address(0)) {
+            revert InvalidAddress();
+        }
         identityRegistry = IdentityRegistry(_identityRegistry);
         organizationRegistry = OrganizationRegistry(_organizationRegistry);
         consentManager = ConsentManager(_consentManager);
