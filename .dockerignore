@@ -1,0 +1,15 @@
+node_modules
+*/node_modules
+*/*/node_modules
+.venv
+__pycache__
+*.pyc
+*.pyo
+.git
+dist
+apps/web/dist
+artifacts
+cache
+coverage
+.env
+.env.*

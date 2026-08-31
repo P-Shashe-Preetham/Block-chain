@@ -1,0 +1,57 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog][1], and the project follows [Semantic Versioning][2] where versioning is meaningful for the release artifact. Smart-contract deployments may also require a separate deployment and migration identifier.
+
+## [Unreleased]
+
+### Added
+
+- Initial repository documentation suite for decentralized identity references, role-based access control, NFT-backed digital-asset ownership, smart-contract governance, and immutable event auditing.
+- Initial architecture, governance, security, contribution, support, and roadmap documents.
+- Initial CI, supply-chain, environment, and AI-agent documentation plans are maintained alongside the project as implementation lands.
+- Executable `SecureAssetPlatform` MVP with ECDSA/secp256k1-compatible EVM identity references, RBAC, unique asset IDs, ERC-721 ownership, manager-controlled transfers, explicit access decisions, replacement-key recovery, and pause controls.
+- Problem Statement 26125 traceability matrix, threat model, acceptance criteria, and MVP asset/network ADR.
+
+### Changed
+
+- None.
+
+### Deprecated
+
+- None.
+
+### Removed
+
+- None.
+
+### Fixed
+
+- Replaced the generic audit event and failed-revert logging assumption with structured identity, key, asset, access-decision, role, transfer, and emergency events.
+- Corrected README, architecture, roadmap, security, and compliance claims for encrypted IPFS, CID semantics, ownership/access separation, controlled transaction costs, ECDSA selection, and prototype scope.
+- Pinned GitHub Actions, migrated the development toolchain from Hardhat 2 to Hardhat 3, locked semantic-release dependencies, added CodeQL and Echidna workflows, and added a moderate-or-higher dependency audit gate.
+
+### Security
+
+- The project remains prototype/MVP stage and has not been represented as independently audited or production-ready.
+- The dependency audit is clean after removing the Hardhat 2 ethers v5 dependency path; `pnpm audit --audit-level=moderate` reports no known vulnerabilities. The remediation is tracked in `docs/SECURITY-SCANNING-STATUS.md`.
+- No production contract addresses, credentials, or personal identity data are included in this documentation baseline.
+
+## [0.1.0] - 2026-08-21
+
+### Added
+
+- Initial documentation and architecture baseline.
+- MIT licensing and citation metadata.
+
+### Security
+
+- Documented private vulnerability reporting, supported versions, and safe handling of keys and identity data.
+
+## References
+
+[Unreleased]: https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/tejaswin-amara/Blockchain-Based-Secure-Platform-for-Identity-Access-Control-and-Digital-Asset-Management/releases/tag/v0.1.0
+[1]: https://keepachangelog.com/en/1.1.0/ "Keep a Changelog"
+[2]: https://semver.org/ "Semantic Versioning"

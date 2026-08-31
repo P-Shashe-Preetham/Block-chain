@@ -1,0 +1,55 @@
+contracts:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'contracts/**/*'
+          - '**/*.sol'
+
+identity:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'services/api/**/*identity*'
+          - 'services/api/**/*auth*'
+          - 'contracts/**/*Identity*'
+          - 'docs/**/*identity*'
+
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'SECURITY.md'
+          - 'docs/threat-model/**/*'
+          - '.github/workflows/**/*'
+          - '.github/dependabot.yml'
+          - '.github/scorecards.yml'
+          - '**/*security*'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'apps/web/**/*'
+          - 'packages/ui/**/*'
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'services/api/**/*'
+          - 'services/indexer/**/*'
+
+infrastructure:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Dockerfile*'
+          - 'docker-compose*.yml'
+          - '.devcontainer/**/*'
+          - '.github/workflows/**/*'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**/*'
+          - 'CITATION.cff'

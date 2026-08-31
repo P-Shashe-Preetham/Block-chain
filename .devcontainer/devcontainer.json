@@ -1,0 +1,55 @@
+{
+  "name": "Blockchain Secure Platform",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "nodeGypDependencies": true
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "JuanBlanco.solidity",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig",
+        "redhat.vscode-yaml",
+        "github.vscode-github-actions"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "files.eol": "\n",
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python"
+      }
+    }
+  },
+  "forwardPorts": [3000, 8000, 8545, 5432, 6379, 9000, 9001],
+  "portsAttributes": {
+    "3000": { "label": "Web console", "onAutoForward": "notify" },
+    "8000": { "label": "FastAPI", "onAutoForward": "notify" },
+    "8545": { "label": "Local EVM RPC", "onAutoForward": "silent" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "6379": { "label": "Redis", "onAutoForward": "silent" },
+    "9000": { "label": "MinIO API", "onAutoForward": "silent" },
+    "9001": { "label": "MinIO console", "onAutoForward": "notify" }
+  },
+  "postCreateCommand": "corepack enable && pnpm install --frozen-lockfile && python3 -m venv .venv",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "PYTHONUNBUFFERED": "1"
+  }
+}

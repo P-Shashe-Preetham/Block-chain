@@ -1,0 +1,104 @@
+name: Bug report
+description: Report a reproducible defect in the platform or its documentation.
+title: "bug: "
+labels:
+  - bug
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve the project. Do not include private keys, seed phrases, credentials, real identity data, or unredacted sensitive logs. For suspected vulnerabilities, use SECURITY.md instead of this form.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: State the defect in one sentence.
+      placeholder: The indexer duplicates an AssetAllocated event after a retry
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Smart contracts
+        - Identity and verification
+        - Role-based access control
+        - NFT asset lifecycle
+        - API
+        - Indexer or reconciliation
+        - Web console
+        - CI/CD or developer tooling
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment context
+      options:
+        - Local development
+        - Automated test environment
+        - EVM testnet
+        - Production or pilot deployment
+        - Documentation only
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version, commit, or contract deployment
+      description: Include the release tag, commit SHA, contract address and network when applicable.
+      placeholder: v0.1.0 / abc1234 / local Hardhat network
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe sequence that reproduces the issue.
+      placeholder: |
+        1. Start the local chain...
+        2. Register an identity...
+        3. Attempt...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Redact secrets, personal data, tokens, private keys, and sensitive wallet information before posting.
+      render: shell
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Node, pnpm, Python, browser, chain/network, and relevant dependency versions.
+      placeholder: Ubuntu 24.04, Node 22, pnpm 9, Python 3.11, Hardhat local network
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I removed secrets and sensitive identity data from this report.
+          required: true
+        - label: This is not a suspected security vulnerability; if it is, I will use SECURITY.md.
+          required: true
