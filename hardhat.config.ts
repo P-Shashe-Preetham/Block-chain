@@ -31,4 +31,10 @@ export default defineConfig({
       timeout: 120000,
     },
   },
+  networks: {
+    localhost: {
+      url: process.env.HARDHAT_NETWORK_URL || "http://127.0.0.1:8545",
+      chainId: 31337,
+    }
+  }
 });

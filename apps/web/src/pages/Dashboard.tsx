@@ -51,7 +51,6 @@ export default function Dashboard() {
       </div>
 
       <Header
-        apiOnline={apiOnline}
         algoAddress={algoAddress}
         onConnectWallet={handleGenerateWallet}
         onScrollTo={handleScrollTo}

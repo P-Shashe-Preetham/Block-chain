@@ -13,7 +13,8 @@ COPY services/persistence/requirements.lock /tmp/persistence-requirements.lock
 COPY services/storage/requirements.lock /tmp/storage-requirements.lock
 RUN python -m pip install --require-hashes --requirement /tmp/api-requirements.lock \
     && python -m pip install --require-hashes --requirement /tmp/persistence-requirements.lock \
-    && python -m pip install --require-hashes --requirement /tmp/storage-requirements.lock
+    && python -m pip install --require-hashes --requirement /tmp/storage-requirements.lock \
+    && python -m pip install PyJWT web3
 
 RUN addgroup --system platform && adduser --system --ingroup platform platform
 COPY --chown=platform:platform services /app/services

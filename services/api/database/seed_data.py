@@ -4,7 +4,7 @@ Database Seed Data for Open Banking System (Bank A, Bank B, Bank C, TSPs, Users)
 
 from datetime import datetime, timezone
 from services.api.database.connection import db
-from services.api.database.models import User, Organization, BankAccount, BankTransaction
+from services.api.database.models import User, Organization, BankAccount, BankTransaction, IncidentLog
 
 # Known Addresses for Simulation
 USER1_WALLET = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
@@ -19,16 +19,46 @@ def seed_database():
     now_iso = datetime.now(timezone.utc).isoformat()
 
     # 1. Seed Users
-    user1 = User(
-        user_id="usr_101",
-        wallet_address=USER1_WALLET,
-        did="did:openbanking:usr101",
-        name="Alice Vance",
-        email="alice.vance@example.com",
+    db.users["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"] = User(
+        user_id="usr_admin",
+        wallet_address="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        did="did:bel:admin",
+        name="Platform Admin",
+        email="admin@example.com",
         status="ACTIVE",
+        role="ADMIN",
         registered_at=now_iso
     )
-    db.users[USER1_WALLET] = user1
+    db.users["0x70997970C51812dc3A010C7d01b50e0d17dc79C8"] = User(
+        user_id="usr_manager",
+        wallet_address="0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        did="did:bel:manager",
+        name="Asset Manager",
+        email="manager@example.com",
+        status="ACTIVE",
+        role="MANAGER",
+        registered_at=now_iso
+    )
+    db.users["0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"] = User(
+        user_id="usr_auditor",
+        wallet_address="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        did="did:bel:auditor",
+        name="Platform Auditor",
+        email="auditor@example.com",
+        status="ACTIVE",
+        role="AUDITOR",
+        registered_at=now_iso
+    )
+    db.users["0x90F79bf6EB2c4f870365E785982E1f101E93b906"] = User(
+        user_id="usr_standard",
+        wallet_address="0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        did="did:bel:user",
+        name="Standard User",
+        email="user@example.com",
+        status="ACTIVE",
+        role="USER",
+        registered_at=now_iso
+    )
 
     # 2. Seed Organizations
     bank_a = Organization(
@@ -182,6 +212,18 @@ def seed_database():
             timestamp="2026-08-15T16:00:00Z"
         )
     ]
+
+    # 6. Seed Incident Log
+    db.incident_logs.append(
+        IncidentLog(
+            log_id="inc_failed_001",
+            requester="0xBAD_ACTOR",
+            token_id=0,
+            asset_id="UNKNOWN",
+            reason="Unauthorized access attempt detected",
+            timestamp=now_iso
+        )
+    )
 
 # Seed immediately on import
 seed_database()

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "environment": "local",
+  "networkName": "hardhat-local",
+  "chainId": 31337,
+  "rpcIdentity": "hardhat-local-provider",
+  "contractName": "SecureAssetPlatform",
+  "contractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "bytecodeHash": "0x5aeff27247270568ab80e7b7bb86114a0159aae8a680b4d09e0ba5d8d1a74fe2",
+  "abiHash": "0xec9554b477de9257a711ceabe5e701023520d08618a768bc4d6618c0d2a6de92",
+  "sourceCommit": "953f1c89b7957d19280430c5aac9ab5ea5ad2ab5",
+  "compiler": "0.8.24",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "evmVersion": "cancun",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "deployerCustody": "disposable-local-signer",
+  "deployedAt": "2026-09-06T04:07:18.475Z"
+}

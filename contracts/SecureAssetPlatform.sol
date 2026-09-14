@@ -28,6 +28,12 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         uint64 expiresAt;
     }
 
+    struct TransferApproval {
+        address approver;
+        uint96 expiresAt;
+        address to;
+    }
+
     enum AssetStatus {
         ACTIVE,
         SUSPENDED,
@@ -43,6 +49,9 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     mapping(uint256 => bytes32) public assetMetadataHash;
     mapping(uint256 => AssetStatus) public assetStatus;
     mapping(uint256 => mapping(bytes32 => mapping(address => AccessRule))) public accessRules;
+    mapping(uint256 => TransferApproval) public approvedTransfers;
+    address public currentAdmin;
+    address public pendingAdmin;
 
     event IdentityRegistered(address indexed subject, bytes32 indexed didHash);
     event IdentityStatusChanged(address indexed subject, bool isActive);
@@ -54,7 +63,7 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         bytes32 indexed assetId,
         bytes32 metadataHash
     );
-    event AccessDecision(address indexed requester, uint256 indexed tokenId, bytes32 indexed action, bool granted);
+    event AccessDecision(address indexed user, uint256 indexed assetId, bool success, string reason);
     event AccessRuleSet(
         uint256 indexed tokenId,
         bytes32 indexed action,
@@ -65,6 +74,15 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     );
     event AssetStatusChanged(uint256 indexed tokenId, AssetStatus status, address indexed actor);
     event EmergencyStateChanged(bool paused);
+    event TransferApproved(
+        uint256 indexed tokenId,
+        address indexed approver,
+        address indexed to,
+        uint256 expiresAt
+    );
+    event AdminTransferInitiated(address indexed currentAdmin, address indexed pendingAdmin);
+    event AdminTransferAccepted(address indexed oldAdmin, address indexed newAdmin);
+    event AdminTransferCancelled(address indexed currentAdmin, address indexed pendingAdmin);
 
     error InvalidAddress();
     error IdentityAlreadyRegistered();
@@ -84,6 +102,10 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     error DefaultAdminImmutable();
     error UnauthorizedTransfer();
     error ApprovalDisabled();
+    error InvalidApprovalExpiry();
+    error NoPendingAdminTransfer();
+    error NotPendingAdmin();
+    error CannotTransferToSelf();
 
     constructor(address rootAdmin) ERC721("BEL Digital Asset Ledger", "BEL-DAM") {
         if (rootAdmin == address(0)) revert InvalidAddress();
@@ -92,6 +114,8 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         _setRoleAdmin(AUDITOR_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(USER_ROLE, DEFAULT_ADMIN_ROLE);
         _grantRole(DEFAULT_ADMIN_ROLE, rootAdmin);
+
+        currentAdmin = rootAdmin;
 
         identityRegistry[rootAdmin] = IdentityProfile({
             didHash: bytes32(0),
@@ -164,6 +188,11 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         bool wasManager = hasRole(MANAGER_ROLE, oldSubject);
         bool wasAuditor = hasRole(AUDITOR_ROLE, oldSubject);
 
+        bytes32 oldDidHash = identityRegistry[oldSubject].didHash;
+        if (oldDidHash != bytes32(0)) {
+            delete identityByDidHash[oldDidHash];
+        }
+
         identityRegistry[oldSubject].isActive = false;
         _revokeRole(MANAGER_ROLE, oldSubject);
         _revokeRole(AUDITOR_ROLE, oldSubject);
@@ -229,6 +258,62 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     {
         if (role == DEFAULT_ADMIN_ROLE) revert DefaultAdminImmutable();
         _revokeRole(role, account);
+    }
+
+    /**
+     * @notice Initiates a 2-step transfer of the default admin role.
+     */
+    function transferAdmin(address newAdmin)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyActiveIdentity(msg.sender)
+        whenNotPaused
+    {
+        if (newAdmin == address(0)) revert InvalidAddress();
+        if (newAdmin == msg.sender) revert CannotTransferToSelf();
+        if (identityRegistry[newAdmin].registeredAt == 0) revert IdentityNotFound();
+        if (!identityRegistry[newAdmin].isActive) revert IdentityInactive();
+
+        pendingAdmin = newAdmin;
+        emit AdminTransferInitiated(msg.sender, newAdmin);
+    }
+
+    /**
+     * @notice Completes the 2-step transfer of the default admin role by the pending admin.
+     */
+    function acceptAdmin()
+        external
+        onlyActiveIdentity(msg.sender)
+        whenNotPaused
+    {
+        if (pendingAdmin == address(0)) revert NoPendingAdminTransfer();
+        if (msg.sender != pendingAdmin) revert NotPendingAdmin();
+
+        address oldAdmin = currentAdmin;
+        currentAdmin = msg.sender;
+        pendingAdmin = address(0);
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        if (oldAdmin != address(0)) {
+            _revokeRole(DEFAULT_ADMIN_ROLE, oldAdmin);
+        }
+
+        emit AdminTransferAccepted(oldAdmin, msg.sender);
+    }
+
+    /**
+     * @notice Cancels a pending admin transfer.
+     */
+    function cancelAdminTransfer()
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyActiveIdentity(msg.sender)
+        whenNotPaused
+    {
+        if (pendingAdmin == address(0)) revert NoPendingAdminTransfer();
+        address cancelled = pendingAdmin;
+        pendingAdmin = address(0);
+        emit AdminTransferCancelled(msg.sender, cancelled);
     }
 
     function mintAndAllocateAsset(address recipient, bytes32 assetId, bytes32 metadataHash)
@@ -312,13 +397,19 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
      * @dev Ownership and access are separate: owners, managers, and auditors may read by policy;
      *      transfer authority is manager-only.
      */
-    function requestAccess(uint256 tokenId, bytes32 action)
+    function requestAccess(uint256 tokenId, bytes32 action, bytes32 clientProvidedHash)
         external
         onlyActiveIdentity(msg.sender)
         whenNotPaused
         returns (bool granted)
     {
         if (action == bytes32(0)) revert AccessActionMissing();
+
+        if (clientProvidedHash != assetMetadataHash[tokenId]) {
+            emit AccessDecision(msg.sender, tokenId, false, "Hash mismatch");
+            revert("Challenge failed");
+        }
+
         address owner = _ownerOf(tokenId);
         if (owner != address(0) && assetStatus[tokenId] == AssetStatus.ACTIVE) {
             AccessRule memory rule = accessRules[tokenId][action][msg.sender];
@@ -330,7 +421,60 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
                     || hasRole(AUDITOR_ROLE, msg.sender);
             }
         }
-        emit AccessDecision(msg.sender, tokenId, action, granted);
+
+        if (!granted) {
+            emit AccessDecision(msg.sender, tokenId, false, "Not allowed");
+            return false;
+        }
+
+        emit AccessDecision(msg.sender, tokenId, true, "Access granted");
+        return true;
+    }
+
+    /**
+     * @notice Approves a transfer by a manager specifying recipient and expiry (Two-Person Rule).
+     */
+    function approveTransfer(uint256 tokenId, address to, uint256 expiresAt)
+        public
+        onlyRole(MANAGER_ROLE)
+        onlyActiveIdentity(msg.sender)
+        whenNotPaused
+    {
+        if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
+        if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
+        if (to == address(0)) revert InvalidAddress();
+        if (!identityRegistry[to].isActive) revert IdentityInactive();
+        if (expiresAt <= block.timestamp || expiresAt > type(uint96).max) revert InvalidApprovalExpiry();
+
+        approvedTransfers[tokenId] = TransferApproval({
+            approver: msg.sender,
+            expiresAt: uint96(expiresAt),
+            to: to
+        });
+        emit TransferApproved(tokenId, msg.sender, to, expiresAt);
+    }
+
+    function _validateAndConsumeTransferApproval(uint256 tokenId, address to) internal {
+        TransferApproval memory approval = approvedTransfers[tokenId];
+        if (approval.approver == address(0)) {
+            emit AccessDecision(msg.sender, tokenId, false, "Transfer not approved");
+            revert UnauthorizedTransfer();
+        }
+        if (approval.approver == msg.sender) {
+            emit AccessDecision(msg.sender, tokenId, false, "Transfer requires a different manager");
+            revert UnauthorizedTransfer();
+        }
+        if (approval.to != to) {
+            emit AccessDecision(msg.sender, tokenId, false, "Recipient does not match approval");
+            revert UnauthorizedTransfer();
+        }
+        if (block.timestamp > approval.expiresAt) {
+            delete approvedTransfers[tokenId];
+            emit AccessDecision(msg.sender, tokenId, false, "Transfer approval expired");
+            revert UnauthorizedTransfer();
+        }
+
+        delete approvedTransfers[tokenId];
     }
 
     /**
@@ -346,7 +490,10 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
         if (!identityRegistry[to].isActive) revert IdentityInactive();
         if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
         if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
+
+        _validateAndConsumeTransferApproval(tokenId, to);
         _transfer(from, to, tokenId);
+        emit AccessDecision(msg.sender, tokenId, true, "Transfer successful");
     }
 
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) onlyActiveIdentity(msg.sender) {
@@ -377,7 +524,10 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     {
         if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
         if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
+
+        _validateAndConsumeTransferApproval(tokenId, to);
         _transfer(from, to, tokenId);
+        emit AccessDecision(msg.sender, tokenId, true, "Transfer successful");
     }
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
@@ -389,7 +539,10 @@ contract SecureAssetPlatform is ERC721, AccessControl, Pausable {
     {
         if (_ownerOf(tokenId) == address(0)) revert AssetNotFound();
         if (assetStatus[tokenId] != AssetStatus.ACTIVE) revert AssetNotTransferable();
+
+        _validateAndConsumeTransferApproval(tokenId, to);
         _safeTransfer(from, to, tokenId, data);
+        emit AccessDecision(msg.sender, tokenId, true, "Transfer successful");
     }
 
     /**

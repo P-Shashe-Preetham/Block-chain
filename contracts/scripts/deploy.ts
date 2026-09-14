@@ -94,15 +94,32 @@ async function main() {
   };
 
   const outputPath = path.resolve(
-    process.env.DEPLOYMENT_MANIFEST_PATH ?? path.join(ROOT, "deployments", `${appEnv}.json`),
+    process.env.DEPLOYMENT_MANIFEST_PATH ?? path.join(ROOT, "deployments", `${appEnv}.manifest.json`),
   );
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });
+
+  const deployment = {
+    chainId,
+    contracts: {
+      SecureAssetPlatform: {
+        address: contractAddress,
+        abi: artifact.abi,
+      },
+    },
+    deployedAt: manifest.deployedAt,
+  };
+  await writeFile(
+    path.join(ROOT, "deployments", "local.json"),
+    `${JSON.stringify(deployment, null, 2)}\n`,
+    { mode: 0o600 }
+  );
 
   console.log(`deployer=${deployer.address}`);
   console.log(`SecureAssetPlatform=${contractAddress}`);
   console.log(`chainId=${chainId}`);
   console.log(`manifest=${outputPath}`);
+  console.log("Deployment artifact written to deployments/local.json");
   console.log("This deployment is for a disposable local/CI network only until an approved non-local policy exists.");
 }
 

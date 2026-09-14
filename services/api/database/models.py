@@ -4,6 +4,33 @@ Database Data Models for Open Banking Backend System
 
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
+from dataclasses import dataclass
+
+@dataclass
+class AuthNonce:
+    wallet_address: str
+    nonce: str
+    message: str
+    created_at: float  # time.time()
+    expires_at: float  # created_at + 300 (5 min)
+
+@dataclass
+class Asset:
+    token_id: int
+    asset_id: str  # e.g. 'BEL-LAB-001'
+    metadata_hash: str  # bytes32 hex
+    owner_wallet: str
+    status: str  # 'ACTIVE', 'SUSPENDED', 'REVOKED', 'RETIRED'
+    minted_at: str  # ISO timestamp
+
+@dataclass
+class AccessLog:
+    log_id: str
+    requester_wallet: str
+    token_id: int
+    action: str
+    granted: bool
+    timestamp: str  # ISO timestamp
 
 class User(BaseModel):
     user_id: str
@@ -12,6 +39,7 @@ class User(BaseModel):
     name: str
     email: str
     status: str = "PENDING"  # PENDING, VERIFIED, ACTIVE, SUSPENDED, REVOKED
+    role: str = "USER"
     registered_at: str
 
 class Organization(BaseModel):
@@ -59,5 +87,13 @@ class AuditLogRecord(BaseModel):
     tsp_wallet: str
     data_type: str
     granted: bool
+    reason: str
+    timestamp: str
+
+class IncidentLog(BaseModel):
+    log_id: str
+    requester: str
+    token_id: int
+    asset_id: str
     reason: str
     timestamp: str

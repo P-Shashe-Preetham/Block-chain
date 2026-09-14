@@ -9,6 +9,7 @@ import base64
 import hmac
 import hashlib
 import json
+import jwt
 from typing import Dict, Any, Optional, Tuple
 
 SECRET_KEY = os.getenv("JWT_SECRET", "open_banking_dev_jwt_signing_key_change_in_production")
@@ -21,6 +22,30 @@ def _base64url_decode(data: str) -> bytes:
     return base64.urlsafe_b64encode(data.encode('utf-8') + padding.encode('utf-8'))
 
 class JWTService:
+    def __init__(self):
+        self.secret = SECRET_KEY
+        
+    def create_session_token(self, wallet_address: str, role: str) -> str:
+        """Create a JWT session token for authenticated wallet."""
+        payload = {
+            "sub": wallet_address.lower(),
+            "role": role,
+            "iss": "blockchain-secure-platform",
+            "iat": int(time.time()),
+            "exp": int(time.time()) + 3600,  # 1 hour
+        }
+        return jwt.encode(payload, self.secret, algorithm="HS256")
+
+    def verify_session_token(self, token: str) -> dict:
+        """Verify and decode a session JWT. Returns payload dict."""
+        try:
+            payload = jwt.decode(token, self.secret, algorithms=["HS256"])
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise ValueError("Token has expired")
+        except jwt.InvalidTokenError as e:
+            raise ValueError(f"Invalid token: {e}")
+
     def create_token(
         self, user_wallet: str, bank_wallet: str, tsp_wallet: str, data_type: str, consent_id: str, ttl_seconds: int = 900
     ) -> str:

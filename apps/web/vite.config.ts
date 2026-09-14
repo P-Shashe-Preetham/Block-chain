@@ -6,6 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
+    extensions: [".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
     alias: {
       "@": path.resolve(__dirname, "src"),
       "@shared": path.resolve(__dirname, "../../shared"),
@@ -13,9 +14,13 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    strictPort: true,
-    allowedHosts: [".manus.computer"],
+    strictPort: false,
+    allowedHosts: [".manus.computer", "localhost", "127.0.0.1"],
     proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
       "/v1": {
         target: "http://localhost:8000",
         changeOrigin: true,

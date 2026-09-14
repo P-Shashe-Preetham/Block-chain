@@ -39,6 +39,11 @@ from services.api.access_routes import router as access_router
 from services.api.bank_routes import router as bank_router
 from services.api.audit_routes import router as audit_router
 
+# New Authentication and RBAC Routers
+from services.api.auth_routes import router as auth_new_router
+from services.api.asset_routes import router as asset_router
+from services.api.rbac_routes import router as rbac_router
+
 
 def load_settings() -> Settings:
     return Settings.from_env()
@@ -116,6 +121,9 @@ def create_app(
     api.include_router(access_router)
     api.include_router(bank_router)
     api.include_router(audit_router)
+    api.include_router(auth_new_router)
+    api.include_router(asset_router)
+    api.include_router(rbac_router)
 
     @api.get("/healthz", tags=["system"])
     def healthz() -> dict[str, str]:

@@ -83,3 +83,30 @@ def require_principal(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="authentication service is not configured",
         ) from exc
+
+from services.api.jwt_service import JWTService
+from fastapi import Depends, HTTPException, Request
+
+def get_current_user(request: Request) -> dict:
+    """FastAPI dependency that extracts and verifies the session JWT."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = auth_header[7:]
+    jwt_service = JWTService()  
+    try:
+        payload = jwt_service.verify_session_token(token)
+        return {"wallet": payload["sub"], "role": payload["role"]}
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+def require_role(*allowed_roles: str):
+    """FastAPI dependency factory that checks the user's role."""
+    def dependency(current_user: dict = Depends(get_current_user)):
+        if current_user["role"] not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Role '{current_user['role']}' not authorized. Required: {allowed_roles}"
+            )
+        return current_user
+    return dependency
